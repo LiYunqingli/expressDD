@@ -98,21 +98,27 @@ function closeModal() {
 
 // 添加新记录
 function addRecord() {
-    // 生成新ID（实际应用中应由后端生成）
-    const newId = String(data.length + 1).padStart(2, '0');
-
     const newRecord = {
-        id: newId,
+        token: getToken(),
+        time: document.getElementById('pickup-time-add').value,
         building: document.getElementById('building-add').value,
         room: document.getElementById('room-add').value,
         pickupCode: document.getElementById('pickup-code-add').value,
         expressNumber: document.getElementById('express-number-add').value,
         notes: document.getElementById('notes-add').value
     };
-
-    data.push(newRecord);
-    renderTable(data); // 重新渲染表格
-    closeModal();
+    let xhr = new XMLHttpRequest();
+    xhr.open("POST", $HOST + "/addData.php", true);
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            console.log(xhr.responseText);
+            getData();
+            //刷新数据
+            closeModal();
+        }
+    };
+    xhr.send(JSON.stringify(newRecord));
 }
 
 // 更新记录
