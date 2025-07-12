@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递取件快捷记录系统</title>
+    <script src="./js/lib.js"></script>
+    <link rel="stylesheet" href="./css/all.main.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/message-box.css">
+    <script src="./js/showMessage.js"></script>
+    <script>
+        //本地检查登录状态
+        if (!checkLoginToken()) {
+            window.location.href = "login.html";
+        } else {
+            //服务器检查登录状态
+            checkLoginTokenIsTrue();
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="statistics">
+            <div class="stat-card" ondblclick="loginOut()">
+                <div class="stat-icon total">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-info">
+                    <h3>70</h3>
+                    <p>今天总快递量</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="deliver" onclick="song()">送快递</div>
+            <div class="tab" data-tab="pick" onclick="qu()">取快递</div>
+            <div class="tab" data-tab="edit">修改记录</div>
+        </div>
+
+        <div class="filters">
+            <div class="date-filter">
+                <label for="date-select"><i class="fas fa-calendar-alt"></i> 选择日期：</label>
+                <input type="date" id="date-select">
+            </div>
+            <div class="action-buttons" id="action-buttons" style="display: none;">
+                <button class="btn btn-success" id="add-record">
+                    <i class="fas fa-plus"></i> 新增记录
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-download"></i> 导出数据
+                </button>
+            </div>
+        </div>
+
+        <div class="content">
+            <table id="records-table">
+                <thead>
+                    <tr>
+                        <th>编号</th>
+                        <th>栋</th>
+                        <th>宿舍号</th>
+                        <th>取件码</th>
+                        <th>快递尾号</th>
+                        <th>备注信息</th>
+                        <th>更新时间</th>
+                        <th class="actions-header" style="display: none;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据将通过JS动态填充 -->
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>© 2023 快递取件快捷记录系统 | 设计：前端开发团队</p>
+        </footer>
+    </div>
+
+    <!-- 新增记录弹窗 -->
+    <div class="modal" id="add-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus-circle"></i> 新增快递记录</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="building-add">栋</label>
+                    <select id="building-add">
+                        <option value="A栋">A栋</option>
+                        <option value="B栋">B栋</option>
+                        <option value="C栋">C栋</option>
+                        <option value="D栋">D栋</option>
+                        <option value="E栋">E栋</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="room-add">宿舍号</label>
+                    <input type="text" id="room-add" placeholder="例如：101">
+                </div>
+                <div class="form-group">
+                    <label for="pickup-code-add">取件码</label>
+                    <input type="text" id="pickup-code-add" placeholder="例如：A1234">
+                </div>
+                <div class="form-group">
+                    <label for="express-number-add">快递尾号</label>
+                    <input type="text" id="express-number-add" placeholder="例如：5678">
+                </div>
+                <div class="form-group">
+                    <label for="pickup-time-add">时间</label>
+                    <!-- 默认今天 -->
+                    <input type="date" name="time" id="pickup-time-add">
+                </div>
+                <div class="form-group">
+                    <label for="notes-add">备注信息</label>
+                    <textarea id="notes-add" placeholder="可输入特殊要求或其他信息"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="cancel-add-btn">取消</button>
+                <button class="btn btn-success" id="save-add-btn">保存记录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改记录弹窗 -->
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> 修改快递记录</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="id-edit">编号</label>
+                    <input type="text" id="id-edit" class="readonly" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="building-edit">栋</label>
+                    <select id="building-edit">
+                        <option value="A栋">A栋</option>
+                        <option value="B栋">B栋</option>
+                        <option value="C栋">C栋</option>
+                        <option value="D栋">D栋</option>
+                        <option value="E栋">E栋</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="room-edit">宿舍号</label>
+                    <input type="text" id="room-edit" placeholder="例如：101">
+                </div>
+                <div class="form-group">
+                    <label for="pickup-code-edit">取件码</label>
+                    <input type="text" id="pickup-code-edit" placeholder="例如：A1234">
+                </div>
+                <div class="form-group">
+                    <label for="express-number-edit">快递尾号</label>
+                    <input type="text" id="express-number-edit" placeholder="例如：5678">
+                </div>
+                <div class="form-group">
+                    <label for="notes-edit">备注信息</label>
+                    <textarea id="notes-edit" placeholder="可输入特殊要求或其他信息"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="cancel-edit-btn">取消</button>
+                <button class="btn btn-success" id="save-edit-btn">保存修改</button>
+            </div>
+        </div>
+    </div>
+    <script src="./js/script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录系统</title>
+    <script src="./js/lib.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="./css/message-box.css">
+    <script src="./js/showMessage.js"></script>
+    <style>
+        :root {
+            --primary-color: #5a67d8;
+            --primary-dark: #4c51bf;
+            --secondary-color: #667eea;
+            --text-color: #2d3748;
+            --light-gray: #f7fafc;
+            --border-color: #e2e8f0;
+            --error-color: #e53e3e;
+            --success-color: #48bb78;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 30px;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            color: var(--primary-dark);
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .login-header p {
+            color: #718096;
+            font-size: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 36px;
+            color: #a0aec0;
+            font-size: 20px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 14px 14px 42px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.2);
+        }
+
+        .input-field:focus+.input-icon {
+            color: var(--primary-color);
+        }
+
+        .radio-group {
+            margin: 25px 0;
+            padding: 15px 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .radio-title {
+            display: block;
+            margin-bottom: 12px;
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .radio-options {
+            display: flex;
+            gap: 20px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .radio-option input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            accent-color: var(--primary-color);
+        }
+
+        .radio-option label {
+            color: var(--text-color);
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(90, 103, 216, 0.3);
+            margin-top: 10px;
+        }
+
+        .login-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(90, 103, 216, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .footer-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-8px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(8px);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .radio-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-container">
+            <div class="logo">A</div>
+        </div>
+        <div class="login-card">
+            <div class="login-header">
+                <h1>账户登录</h1>
+                <p>欢迎回来，请登录您的账户</p>
+            </div>
+
+            <div class="input-group">
+                <label for="username">用户名</label>
+                <div class="input-icon">
+                    <i class="material-icons">person</i>
+                </div>
+                <input type="text" id="username" name="username" class="input-field" placeholder="请输入用户名">
+                <div class="error-message" id="username-error">用户名不能为空</div>
+            </div>
+
+            <div class="input-group">
+                <label for="password">密码</label>
+                <div class="input-icon">
+                    <i class="material-icons">lock</i>
+                </div>
+                <input type="password" id="password" name="password" class="input-field" placeholder="请输入密码">
+                <div class="error-message" id="password-error">密码不能为空</div>
+            </div>
+
+            <div class="radio-group">
+                <span class="radio-title">登录身份</span>
+                <div class="radio-options">
+                    <div class="radio-option">
+                        <input type="radio" name="role" value="admin" id="admin-role">
+                        <label for="admin-role">管理员</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" name="role" value="user" id="user-role">
+                        <label for="user-role">用户</label>
+                    </div>
+                </div>
+                <div class="error-message" id="role-error">请选择登录身份</div>
+            </div>
+
+            <button class="login-button" onclick="login()">登 录</button>
+
+            <div class="footer-links">
+                <a href="#" class="footer-link">忘记密码?</a>
+                <a href="#" class="footer-link">注册账户</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 添加表单验证和错误提示
+        function validateForm() {
+            let isValid = true;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const role = document.querySelector('input[name="role"]:checked');
+
+            // 重置错误状态
+            document.getElementById("username-error").style.display = "none";
+            document.getElementById("password-error").style.display = "none";
+            document.getElementById("role-error").style.display = "none";
+
+            if (username === "") {
+                document.getElementById("username-error").style.display = "block";
+                document.getElementById("username").classList.add("shake");
+                isValid = false;
+                setTimeout(() => {
+                    document.getElementById("username").classList.remove("shake");
+                }, 500);
+            }
+
+            if (password === "") {
+                document.getElementById("password-error").style.display = "block";
+                document.getElementById("password").classList.add("shake");
+                isValid = false;
+                setTimeout(() => {
+                    document.getElementById("password").classList.remove("shake");
+                }, 500);
+            }
+
+            if (!role) {
+                document.getElementById("role-error").style.display = "block";
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // 添加shake动画的CSS
+        const style = document.createElement('style');
+        style.textContent = `
+            .shake {
+                animation: shake 0.5s;
+                border-color: var(--error-color) !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 原有检查函数
+        function check() {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            let role = document.querySelector('input[name="role"]:checked');
+
+            if (username == "" || password == "") {
+                alert("用户名或密码不能为空");
+                return false;
+            } else {
+                if (!role) {
+                    alert("请选择角色");
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        // 修改后的登录函数
+        function login() {
+            if (validateForm()) {
+                console.log("check校验成功");
+                let username = document.getElementById("username").value;
+                let password = document.getElementById("password").value;
+                let rule = document.querySelector('input[name="role"]:checked').value;
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", $HOST + "/login.php", true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        let result = JSON.parse(xhr.responseText);
+                        if (result.code == 200) {
+                            top.showMessage(result.msg);
+                            top.showMessage(result.token);
+                            localStorage.setItem("token", result.token);
+                            setTimeout(() => {
+                                window.location.href = "./index.html"
+                            }, 2000)
+                        } else {
+                            top.showMessage(result.msg, 3000, "red");
+                        }
+                    }
+                }
+                xhr.send(`rule=${rule}&username=${username}&password=${password}`);
+            } else {
+                console.log("表单校验失败");
+            }
+        }
+
+        // 原有的登录状态检查代码
+        // 本地检查登录状态
+        if (!checkLoginToken()) {
+            // window.location.href = "login.html";
+        } else {
+            // 服务器检查登录状态
+            window.type = 'login'; // 设置变量，用于判断当前页面是login.html还是index.html
+            checkLoginTokenIsTrue();
+        }
+
+        // 添加输入框回车事件
+        document.getElementById("password").addEventListener("keypress", function (event) {
+            if (event.key === "Enter") {
+                login();
+            }
+        });
+    </script>
+</body>
+
+</html>

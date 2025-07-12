@@ -1,0 +1,42 @@
+/* 消息盒子样式 */
+.message-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px;
+    padding-right: 20px;
+    background-color: #4CAF50;
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.5s, transform 0.5s;
+    z-index: 1000;
+}
+
+/* 警告颜色 */
+.red {
+    background-color: #f44336;
+}
+
+/* 消息盒子显示时的动画 */
+.message-box.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 关闭按钮样式 */
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+}
+
+/* 多个消息盒子的间距 */
+.message-box+.message-box {
+    margin-top: 10px;
+}
