@@ -86,6 +86,7 @@ function openEditModal(id) {
     document.getElementById('pickup-code-edit').value = record.pickupCode;
     document.getElementById('express-number-edit').value = record.expressNumber;
     document.getElementById('notes-edit').value = record.notes;
+    document.getElementById('pickup-time-edit').value = record.time;
 
     editModal.style.display = 'flex';
 }
@@ -101,7 +102,7 @@ function addRecord() {
     const newRecord = {
         token: getToken(),
         time: document.getElementById('pickup-time-add').value,
-        building: document.getElementById('building-add').value,
+        building: document.querySelector('#building-add select').value,
         room: document.getElementById('room-add').value,
         pickupCode: document.getElementById('pickup-code-add').value,
         expressNumber: document.getElementById('express-number-add').value,
@@ -125,13 +126,15 @@ function addRecord() {
 function updateRecord() {
     const record = data.find(item => item.id === currentEditId);
     if (record) {
+        record.token = getToken();
+        record.time = document.getElementById('pickup-time-edit').value;
         record.building = document.getElementById('building-edit').value;
         record.room = document.getElementById('room-edit').value;
         record.pickupCode = document.getElementById('pickup-code-edit').value;
         record.expressNumber = document.getElementById('express-number-edit').value;
         record.notes = document.getElementById('notes-edit').value;
 
-        renderTable(data); // 重新渲染表格
+        console.log(record);
         closeModal();
     }
 }
@@ -177,13 +180,15 @@ function loadBuilding() {
             } else {
                 isFirst = false;
             }
-            let shuchu = "";
+            let shuchu = "<option value='null' selected>请选择</option>";
             for (let i = 0; i < result.length; i++) {
                 shuchu += `
                             <option value="${result[i].input}">${result[i].input}</option>
                         `;
             }
-            document.getElementById("building-add").innerHTML = shuchu;
+            // building-edit
+            document.getElementById("building-add").innerHTML = "<select>" + shuchu + "</select>";
+            document.getElementById("building-edit").innerHTML = shuchu;
         }
     }
     xhr.send();
@@ -345,6 +350,7 @@ function getData() {
             if (result.code === 200) {
                 data = result.data;
                 renderTable(result.data);
+                document.querySelector('.active').click()
             } else {
                 top.showMessage(result.msg, 3000, "red");
                 tableBody.innerHTML = '';
@@ -413,7 +419,6 @@ function init() {
     dateSelect.addEventListener('change', () => {
         top.showMessage('选择的日期：' + dateSelect.value);
         getData();//更新数据
-        document.querySelector('.active').onclick();// 刷新表格
     });
 
     // 编辑和删除按钮事件委托

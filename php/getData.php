@@ -13,10 +13,10 @@ if (checkParm($type)) {
         if (checkToken($token, $conn)) {
             if ($type != "all") {
                 //返回某天的数据
-                $sql = "SELECT * FROM `data` WHERE `time` = '$type' ORDER BY id DESC";
+                $sql = "SELECT * FROM `data` WHERE `time` = '$type' ORDER BY id ASC";
             } else {
                 //返回完整数据
-                $sql = "SELECT * FROM `data` ORDER BY id DESC";
+                $sql = "SELECT * FROM `data` ORDER BY id ASC";
             }
             $result = $conn->query($sql);
             if ($result->num_rows > 0) {
