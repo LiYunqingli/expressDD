@@ -114,9 +114,15 @@ function addRecord() {
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             console.log(xhr.responseText);
-            getData();
-            //刷新数据
-            closeModal();
+            let result = JSON.parse(xhr.responseText);
+            if (result.code == 200) {
+                getData();
+                //刷新数据
+                closeModal();
+                top.showMessage(result.msg);
+            } else {
+                top.showMessage(result.msg, 3000, "red");
+            }
         }
     };
     xhr.send(JSON.stringify(newRecord));
@@ -135,7 +141,24 @@ function updateRecord() {
         record.notes = document.getElementById('notes-edit').value;
 
         console.log(record);
-        closeModal();
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", $HOST + "/editData.php", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                console.log(xhr.responseText);
+                let result = JSON.parse(xhr.responseText);
+                if (result.code == 200) {
+                    getData();
+                    //刷新数据
+                    closeModal();
+                    top.showMessage(result.msg);
+                }else{
+                    top.showMessage(result.msg, 3000, "red");
+                }
+            }
+        };
+        xhr.send(JSON.stringify(record));
     }
 }
 
