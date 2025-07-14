@@ -7,7 +7,7 @@
 
 // ----------------------------------
 
-/* 主机地址 */const $MAIN = "http://127.0.0.1:1234";
+/* 主机地址 */const $MAIN = "http://192.168.2.114:1234";
 
 const $HOST = $MAIN + "/php";
 const $HOST_HOME = $MAIN + "/login.html"//登录页
