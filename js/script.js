@@ -153,7 +153,7 @@ function updateRecord() {
                     //刷新数据
                     closeModal();
                     top.showMessage(result.msg);
-                }else{
+                } else {
                     top.showMessage(result.msg, 3000, "red");
                 }
             }
@@ -165,11 +165,23 @@ function updateRecord() {
 // 删除记录
 function deleteRecord(id) {
     if (confirm('确定要删除这条记录吗？')) {
-        const index = data.findIndex(item => item.id === id);
-        if (index !== -1) {
-            data.splice(index, 1);
-            renderTable(data); // 重新渲染表格
-        }
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", $HOST + "/delData.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                console.log(xhr.responseText);
+                let result = JSON.parse(xhr.responseText);
+                if (result.code == 200) {
+                    getData();
+                    closeModal();
+                    top.showMessage(result.msg);
+                } else {
+                    top.showMessage(result.msg, 3000, "red");
+                }
+            }
+        };
+        xhr.send(`token=${getToken()}&id=${id}`);
     }
 }
 
@@ -185,6 +197,34 @@ function setToday() {
     var formattedDate = year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
     pickup_time_add.value = formattedDate;
     document.getElementById("date-select").value = formattedDate;//主页面的日期选择器
+}
+
+//获取今天有多少单
+function setTotalNum() {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', $HOST + '/getTodayNum.php?' + `today=${dateSelect.value}`, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let result = JSON.parse(xhr.responseText);
+            if (result.code == 200) {
+                document.getElementById("todayNum").innerText = result.num;
+            }
+        }
+    }
+    xhr.send();
+    let xhr_1 = new XMLHttpRequest();
+    xhr_1.open('GET', $HOST + '/getMonthNum.php?' + `today=${dateSelect.value}`, true);
+    xhr_1.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr_1.onreadystatechange = function () {
+        if (xhr_1.readyState === 4 && xhr_1.status === 200) {
+            let result = JSON.parse(xhr_1.responseText);
+            if (result.code == 200) {
+                document.getElementById("monthNum").innerText = result.num;
+            }
+        }
+    }
+    xhr_1.send();
 }
 
 // insert id = building-add //动态加载新建model中的栋
@@ -441,6 +481,9 @@ function init() {
     // 日期筛选器
     dateSelect.addEventListener('change', () => {
         top.showMessage('选择的日期：' + dateSelect.value);
+        document.getElementById("todayNum").innerText = "xx";
+        document.getElementById("monthNum").innerText = "xx";
+        setTotalNum();
         getData();//更新数据
     });
 
@@ -454,6 +497,7 @@ function init() {
             deleteRecord(id);
         }
     });
+    setTotalNum();
 }
 
 // 页面加载完成后初始化
