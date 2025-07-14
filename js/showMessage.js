@@ -6,6 +6,7 @@ top.showMessage = function (message, duration = 3000, type = 'green') {
     if (type === 'red') {
         messageBox.classList.add('red');
     }
+    messageBox.onclick = () => closeMessage(messageBox);
 
     // 添加消息内容
     messageBox.textContent = message;
