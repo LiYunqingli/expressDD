@@ -5,7 +5,7 @@
     right: 20px;
     padding: 15px;
     padding-right: 20px;
-    background-color: #4CAF50;
+    background-color: #4caf4f74;
     color: white;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -17,7 +17,7 @@
 
 /* 警告颜色 */
 .red {
-    background-color: #f44336;
+    background-color: #f443367a;
 }
 
 /* 消息盒子显示时的动画 */
