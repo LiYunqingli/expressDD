@@ -369,9 +369,9 @@ footer {
 }
 
 @media (max-width: 768px) {
-    .tabs {
+    /* .tabs {
         flex-direction: column;
-    }
+    } */
 
     .filters {
         flex-direction: column;
