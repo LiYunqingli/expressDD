@@ -60,6 +60,7 @@ function renderTable(data, style = '') {
     });
 }
 
+
 // 打开新增记录弹窗
 function openAddModal() {
     // 重置表单
@@ -174,6 +175,7 @@ function deleteRecord(id) {
                 let result = JSON.parse(xhr.responseText);
                 if (result.code == 200) {
                     getData();
+                    renderTable(data);
                     closeModal();
                     top.showMessage(result.msg);
                 } else {
@@ -310,7 +312,7 @@ function song() {
 
 function qu() {
     console.log("qu");
-    let new_data = [...data]; // 使用原始数据副本
+    let new_data = data; // 使用原始数据副本
 
     // 分类数组
     var type_zimu = []; // [X]x-xxxx[0] 
