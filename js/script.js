@@ -1,5 +1,5 @@
 // 全局的数据
-var data = []
+top.data = []
 // DOM元素
 const tabs = document.querySelectorAll('.tab');
 const tableBody = document.querySelector('#records-table tbody');
@@ -75,7 +75,7 @@ function openAddModal() {
 
 // 打开修改记录弹窗
 function openEditModal(id) {
-    const record = data.find(item => item.id === id);
+    const record = top.data.find(item => item.id === id);
     if (!record) return;
 
     currentEditId = id;
@@ -131,7 +131,7 @@ function addRecord() {
 
 // 更新记录
 function updateRecord() {
-    const record = data.find(item => item.id === currentEditId);
+    const record = top.data.find(item => item.id === currentEditId);
     if (record) {
         record.token = getToken();
         record.time = document.getElementById('pickup-time-edit').value;
@@ -175,7 +175,7 @@ function deleteRecord(id) {
                 let result = JSON.parse(xhr.responseText);
                 if (result.code == 200) {
                     getData();
-                    renderTable(data);
+                    renderTable(top.data);
                     closeModal();
                     top.showMessage(result.msg);
                 } else {
@@ -261,7 +261,7 @@ function loadBuilding() {
 
 function song() {
     console.log("song");
-    let new_data = data; // 假设data是外部传入的原始数据
+    let new_data = top.data; // 假设data是外部传入的原始数据
     console.log(new_data);
     console.log(top.buildingData);
 
@@ -312,7 +312,7 @@ function song() {
 
 function qu() {
     console.log("qu");
-    let new_data = data; // 使用原始数据副本
+    let new_data = top.data; // 使用原始数据副本
 
     // 分类数组
     var type_zimu = []; // [X]x-xxxx[0] 
@@ -413,11 +413,14 @@ function getData() {
         if (xhr.readyState === 4 && xhr.status === 200) {
             const result = JSON.parse(xhr.responseText);
             if (result.code === 200) {
-                data = result.data;
-                renderTable(result.data);
-                document.querySelector('.active').click()
+                top.data = result.data;
+                console.log("数据更新：" + result.data);
+                renderTable(top.data);
+                // document.querySelector('.active').click()
             } else {
                 top.showMessage(result.msg, 3000, "red");
+                top.data = result.data;
+                console.log("空数据更新：" + result.data);
                 tableBody.innerHTML = '';
             }
         }
@@ -444,14 +447,14 @@ function init() {
             if (activeTab === 'edit') {
                 actionButtons.style.display = 'flex';
                 actionsHeader.style.display = 'table-cell';
-                renderTable(data);
+                renderTable(top.data);
             } else {
                 actionButtons.style.display = 'none';
                 actionsHeader.style.display = 'none';
             }
 
             // 重新渲染表格
-            // renderTable(data);
+            // renderTable(top.data);
         });
     });
 
