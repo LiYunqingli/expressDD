@@ -1,11 +1,440 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>快递查询系统</title>
+    <script src="../js/showMessage.js"></script>
+    <script src="../js/lib.js"></script>
+    <link rel="stylesheet" href="../css/message-box.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2ecc71;
+            --secondary-dark: #27ae60;
+            --warning: #f39c12;
+            --warning-dark: #d35400;
+            --danger: #e74c3c;
+            --danger-dark: #c0392b;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-group {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 5px 0 0 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        #searchButton {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #searchButton:hover {
+            background: var(--primary-dark);
+        }
+
+        .hint {
+            text-align: center;
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .results-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #f1f5f9;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-count {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        .results-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+            color: var(--dark);
+            padding: 16px 20px;
+            text-align: left;
+        }
+
+        .results-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        .no-results i {
+            font-size: 3rem;
+            color: #ddd;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-row {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            min-width: 100px;
+            color: var(--gray);
+        }
+
+        @media (max-width: 768px) {
+            .search-group {
+                flex-direction: column;
+            }
+
+            #searchInput {
+                border-radius: 5px;
+                margin-bottom: 10px;
+            }
+
+            #searchButton {
+                border-radius: 5px;
+                justify-content: center;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .results-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .result-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .result-label {
+                min-width: auto;
+            }
+        }
+    </style>
+    <script>
+        // 本地检查登录状态
+        if (!checkLoginToken()) {
+            window.location.href = "login.html";
+        } else {
+            // 服务器检查登录状态
+            checkLoginTokenIsTrue();
+        }
+    </script>
 </head>
+
 <body>
-    <h1>查询</h1>
+    <div class="container">
+        <header>
+            <h1>快递查询系统</h1>
+            <p class="subtitle">快速查找您的快递信息</p>
+        </header>
+
+        <div class="search-box">
+            <div class="search-group">
+                <input type="text" id="searchInput" placeholder="请输入栋号、宿舍号、取件码或快递尾号">
+                <button id="searchButton" onclick="search()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                    搜索
+                </button>
+            </div>
+            <p class="hint">提示：可以搜索栋号、宿舍号、取件码或快递单号后4位</p>
+        </div>
+
+        <div class="results-container">
+            <div class="results-header">
+                <h2>查询结果</h2>
+                <div class="results-count">共 <span id="resultCount">0</span> 条记录</div>
+            </div>
+            <div id="searchResults" class="no-results">
+                <i>🔍</i>
+                <p>请输入关键词进行查询</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 按Enter键触发搜索
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+
+        function search() {
+            let searchInput = document.getElementById('searchInput').value.trim();
+            if (searchInput === '') {
+                top.showMessage('请输入搜索内容', 3000, "var(--danger)");
+                return;
+            }
+
+            // 获取token
+            const token = localStorage.getItem('token');
+            if (!token) {
+                top.showMessage('登录信息已过期，请重新登录', 3000, "var(--danger)");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 1500);
+                return;
+            }
+
+            // 显示加载状态
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div style="text-align:center;padding:30px;"><i>⏳</i><p>搜索中，请稍候...</p></div>';
+            document.getElementById('resultCount').textContent = '0';
+
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '../php/searchData.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            let result = JSON.parse(xhr.responseText);
+                            if (result.code === 200) {
+                                displayResults(result.data);
+                            } else {
+                                top.showMessage(result.msg, 3000, "var(--danger)");
+                                resultsDiv.innerHTML = '<div class="no-results"><i>⚠️</i><p>' + result.msg + '</p></div>';
+                            }
+                        } catch (e) {
+                            top.showMessage('解析响应失败: ' + e, 3000, "var(--danger)");
+                            resultsDiv.innerHTML = '<div class="no-results"><i>❌</i><p>服务器响应错误</p></div>';
+                        }
+                    } else {
+                        top.showMessage('网络请求失败: ' + xhr.status, 3000, "var(--danger)");
+                        resultsDiv.innerHTML = '<div class="no-results"><i>❌</i><p>网络请求失败，请重试</p></div>';
+                    }
+                }
+            };
+            
+            // 发送数据
+            const params = `token=${encodeURIComponent(token)}&searchInput=${encodeURIComponent(searchInput)}`;
+            xhr.send(params);
+        }
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('searchResults');
+            const resultCount = document.getElementById('resultCount');
+            
+            if (!data || data.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results"><i>🔍</i><p>没有找到匹配的记录</p></div>';
+                resultCount.textContent = '0';
+                return;
+            }
+
+            resultCount.textContent = data.length;
+            
+            // 清空结果容器
+            resultsDiv.innerHTML = '';
+            
+            // 移动端使用列表视图，桌面端使用表格视图
+            if (window.innerWidth < 768) {
+                // 移动端视图
+                data.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'result-item';
+                    
+                    const fields = [
+                        {label: '日期', value: item.time},
+                        {label: '登记时间', value: item.insert_time},
+                        {label: '栋号', value: item.building},
+                        {label: '宿舍号', value: item.room},
+                        {label: '取件码', value: item.pickupCode},
+                        {label: '快递单号', value: item.expressNumber},
+                        {label: '备注', value: item.notes || '无'}
+                    ];
+                    
+                    fields.forEach(field => {
+                        if (field.value) {
+                            const rowDiv = document.createElement('div');
+                            rowDiv.className = 'result-row';
+                            
+                            const labelSpan = document.createElement('span');
+                            labelSpan.className = 'result-label';
+                            labelSpan.textContent = field.label + ':';
+                            
+                            const valueSpan = document.createElement('span');
+                            valueSpan.textContent = field.value;
+                            
+                            rowDiv.appendChild(labelSpan);
+                            rowDiv.appendChild(valueSpan);
+                            itemDiv.appendChild(rowDiv);
+                        }
+                    });
+                    
+                    resultsDiv.appendChild(itemDiv);
+                });
+            } else {
+                // 桌面端视图 - 表格
+                const table = document.createElement('table');
+                table.className = 'results-table';
+                
+                // 创建表头
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                const headers = ['日期', '登记时间', '栋号', '宿舍号', '取件码', '快递单号', '备注'];
+                
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // 创建表格内容
+                const tbody = document.createElement('tbody');
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+                    
+                    const fields = [
+                        item.time,
+                        item.insert_time,
+                        item.building,
+                        item.room,
+                        item.pickupCode,
+                        item.expressNumber,
+                        item.notes || '无'
+                    ];
+                    
+                    fields.forEach(value => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        row.appendChild(td);
+                    });
+                    
+                    tbody.appendChild(row);
+                });
+                
+                table.appendChild(tbody);
+                resultsDiv.appendChild(table);
+            }
+        }
+    </script>
 </body>
+
 </html>
