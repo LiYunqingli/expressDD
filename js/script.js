@@ -164,26 +164,33 @@ function updateRecord() {
 
 // 删除记录
 function deleteRecord(id) {
-    if (confirm('确定要删除这条记录吗？')) {
-        let xhr = new XMLHttpRequest();
-        xhr.open("POST", $HOST + "/delData.php", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                console.log(xhr.responseText);
-                let result = JSON.parse(xhr.responseText);
-                if (result.code == 200) {
-                    getData();
-                    renderTable(top.data);
-                    closeModal();
-                    top.showMessage(result.msg);
-                } else {
-                    top.showMessage(result.msg, 3000, "red");
+    confirmDialog.show({
+        title: "确认删除数据吗？",
+        message: "删除后数据将无法恢复，请谨慎操作！",
+        onConfirm: () => {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", $HOST + "/delData.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    console.log(xhr.responseText);
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        getData();
+                        renderTable(top.data);
+                        closeModal();
+                        top.showMessage(result.msg);
+                    } else {
+                        top.showMessage(result.msg, 3000, "red");
+                    }
                 }
-            }
-        };
-        xhr.send(`token=${getToken()}&id=${id}`);
-    }
+            };
+            xhr.send(`token=${getToken()}&id=${id}`);
+        },
+        onCancel: () => {
+            console.log("删除操作已取消");
+        }
+    });
 }
 
 function setToday() {
