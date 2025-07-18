@@ -7,8 +7,5 @@
         "password": "Lihuarong5887",
         "database": "expressDD",
         "port": 3306
-    },
-    "Server": {
-        "host": "http://192.168.2.114:1234"
     }
 }
