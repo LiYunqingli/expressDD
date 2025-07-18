@@ -9,117 +9,92 @@
     <script src="../js/lib.js"></script>
     <link rel="stylesheet" href="../css/message-box.css">
     <style>
-        :root {
-            --primary: #3498db;
-            --primary-dark: #2980b9;
-            --secondary: #2ecc71;
-            --secondary-dark: #27ae60;
-            --warning: #f39c12;
-            --warning-dark: #d35400;
-            --danger: #e74c3c;
-            --danger-dark: #c0392b;
-            --light: #f8f9fa;
-            --dark: #343a40;
-            --gray: #6c757d;
-            --border: #dee2e6;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background-color: #f0f4f8;
-            color: var(--dark);
-            line-height: 1.6;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
+            padding: 30px 0;
+            color: white;
         }
 
-        h1 {
-            color: var(--primary);
-            margin-bottom: 10px;
+        header h1 {
             font-size: 2.5rem;
-        }
-
-        .subtitle {
-            color: var(--gray);
-            font-size: 1.1rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .search-box {
             background: white;
-            border-radius: 10px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: var(--shadow);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            margin-bottom: 30px;
         }
 
-        .search-group {
+        .input-group {
             display: flex;
             margin-bottom: 15px;
         }
 
         #searchInput {
             flex: 1;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 5px 0 0 5px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px 0 0 8px;
             font-size: 1rem;
             transition: border-color 0.3s;
         }
 
         #searchInput:focus {
-            border-color: var(--primary);
+            border-color: #4CAF50;
             outline: none;
         }
 
         #searchButton {
-            background: var(--primary);
+            background: #4CAF50;
             color: white;
             border: none;
-            padding: 12px 20px;
-            border-radius: 0 5px 5px 0;
+            padding: 15px 25px;
+            border-radius: 0 8px 8px 0;
             cursor: pointer;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: bold;
             transition: background 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         #searchButton:hover {
-            background: var(--primary-dark);
+            background: #45a049;
         }
 
         .hint {
             text-align: center;
-            color: var(--gray);
+            color: #666;
             font-size: 0.9rem;
             margin-bottom: 10px;
         }
 
         .results-container {
             background: white;
-            border-radius: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             overflow: hidden;
-            box-shadow: var(--shadow);
-            margin-bottom: 30px;
         }
 
         .results-header {
@@ -127,47 +102,44 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px;
-            background-color: #f1f5f9;
-            border-bottom: 1px solid var(--border);
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
         }
 
         .results-count {
-            font-weight: 600;
-            color: var(--primary);
+            font-weight: bold;
+            color: #4CAF50;
         }
 
         .results-table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 800px;
         }
 
         .results-table th {
-            background-color: #f1f5f9;
-            font-weight: 600;
-            color: var(--dark);
-            padding: 16px 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
             text-align: left;
         }
 
         .results-table td {
-            padding: 16px 20px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
         }
 
-        .results-table tr:last-child td {
-            border-bottom: none;
+        .results-table tr:nth-child(even) {
+            background-color: #f8f9fa;
         }
 
         .results-table tr:hover {
-            background-color: #f8f9fa;
+            background-color: #e9f7e9;
         }
 
         .no-results {
             text-align: center;
             padding: 40px;
-            color: var(--gray);
+            color: #777;
         }
 
         .no-results i {
@@ -176,9 +148,40 @@
             margin-bottom: 15px;
         }
 
+        @media (max-width: 768px) {
+            .search-box {
+                padding: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            #searchInput {
+                border-radius: 8px;
+                margin-bottom: 10px;
+            }
+
+            #searchButton {
+                border-radius: 8px;
+                padding: 15px;
+            }
+
+            .results-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .results-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
         .result-item {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
+            padding: 15px;
+            border-bottom: 1px solid #eee;
         }
 
         .result-item:last-child {
@@ -187,49 +190,13 @@
 
         .result-row {
             display: flex;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .result-label {
-            font-weight: 600;
-            min-width: 100px;
-            color: var(--gray);
-        }
-
-        @media (max-width: 768px) {
-            .search-group {
-                flex-direction: column;
-            }
-
-            #searchInput {
-                border-radius: 5px;
-                margin-bottom: 10px;
-            }
-
-            #searchButton {
-                border-radius: 5px;
-                justify-content: center;
-            }
-
-            .results-header {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-
-            .results-table {
-                display: block;
-                overflow-x: auto;
-            }
-
-            .result-row {
-                flex-direction: column;
-                gap: 5px;
-            }
-
-            .result-label {
-                min-width: auto;
-            }
+            font-weight: bold;
+            min-width: 80px;
+            color: #555;
         }
     </style>
     <script>
@@ -247,18 +214,13 @@
     <div class="container">
         <header>
             <h1>快递查询系统</h1>
-            <p class="subtitle">快速查找您的快递信息</p>
+            <p>快速查找您的快递信息</p>
         </header>
 
         <div class="search-box">
-            <div class="search-group">
+            <div class="input-group">
                 <input type="text" id="searchInput" placeholder="请输入栋号、宿舍号、取件码或快递尾号">
-                <button id="searchButton" onclick="search()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                    </svg>
-                    搜索
-                </button>
+                <button id="searchButton" onclick="search()">搜索</button>
             </div>
             <p class="hint">提示：可以搜索栋号、宿舍号、取件码或快递单号后4位</p>
         </div>
@@ -286,14 +248,14 @@
         function search() {
             let searchInput = document.getElementById('searchInput').value.trim();
             if (searchInput === '') {
-                top.showMessage('请输入搜索内容', 3000, "var(--danger)");
+                top.showMessage('请输入搜索内容', 3000, "red");
                 return;
             }
 
             // 获取token
             const token = localStorage.getItem('token');
             if (!token) {
-                top.showMessage('登录信息已过期，请重新登录', 3000, "var(--danger)");
+                top.showMessage('登录信息已过期，请重新登录', 3000, "red");
                 setTimeout(() => {
                     window.location.href = "login.html";
                 }, 1500);
@@ -316,20 +278,20 @@
                             if (result.code === 200) {
                                 displayResults(result.data);
                             } else {
-                                top.showMessage(result.msg, 3000, "var(--danger)");
+                                top.showMessage(result.msg, 3000, "red");
                                 resultsDiv.innerHTML = '<div class="no-results"><i>⚠️</i><p>' + result.msg + '</p></div>';
                             }
                         } catch (e) {
-                            top.showMessage('解析响应失败: ' + e, 3000, "var(--danger)");
+                            top.showMessage('解析响应失败: ' + e, 3000, "red");
                             resultsDiv.innerHTML = '<div class="no-results"><i>❌</i><p>服务器响应错误</p></div>';
                         }
                     } else {
-                        top.showMessage('网络请求失败: ' + xhr.status, 3000, "var(--danger)");
+                        top.showMessage('网络请求失败: ' + xhr.status, 3000, "red");
                         resultsDiv.innerHTML = '<div class="no-results"><i>❌</i><p>网络请求失败，请重试</p></div>';
                     }
                 }
             };
-            
+
             // 发送数据
             const params = `token=${encodeURIComponent(token)}&searchInput=${encodeURIComponent(searchInput)}`;
             xhr.send(params);
@@ -338,7 +300,7 @@
         function displayResults(data) {
             const resultsDiv = document.getElementById('searchResults');
             const resultCount = document.getElementById('resultCount');
-            
+
             if (!data || data.length === 0) {
                 resultsDiv.innerHTML = '<div class="no-results"><i>🔍</i><p>没有找到匹配的记录</p></div>';
                 resultCount.textContent = '0';
@@ -346,71 +308,71 @@
             }
 
             resultCount.textContent = data.length;
-            
+
             // 清空结果容器
             resultsDiv.innerHTML = '';
-            
+
             // 移动端使用列表视图，桌面端使用表格视图
             if (window.innerWidth < 768) {
                 // 移动端视图
                 data.forEach(item => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'result-item';
-                    
+
                     const fields = [
-                        {label: '日期', value: item.time},
-                        {label: '登记时间', value: item.insert_time},
-                        {label: '栋号', value: item.building},
-                        {label: '宿舍号', value: item.room},
-                        {label: '取件码', value: item.pickupCode},
-                        {label: '快递单号', value: item.expressNumber},
-                        {label: '备注', value: item.notes || '无'}
+                        { label: '日期', value: item.time },
+                        { label: '登记时间', value: item.insert_time },
+                        { label: '栋号', value: item.building },
+                        { label: '宿舍号', value: item.room },
+                        { label: '取件码', value: item.pickupCode },
+                        { label: '快递单号', value: item.expressNumber },
+                        { label: '备注', value: item.notes || '无' }
                     ];
-                    
+
                     fields.forEach(field => {
                         if (field.value) {
                             const rowDiv = document.createElement('div');
                             rowDiv.className = 'result-row';
-                            
+
                             const labelSpan = document.createElement('span');
                             labelSpan.className = 'result-label';
                             labelSpan.textContent = field.label + ':';
-                            
+
                             const valueSpan = document.createElement('span');
                             valueSpan.textContent = field.value;
-                            
+
                             rowDiv.appendChild(labelSpan);
                             rowDiv.appendChild(valueSpan);
                             itemDiv.appendChild(rowDiv);
                         }
                     });
-                    
+
                     resultsDiv.appendChild(itemDiv);
                 });
             } else {
                 // 桌面端视图 - 表格
                 const table = document.createElement('table');
                 table.className = 'results-table';
-                
+
                 // 创建表头
                 const thead = document.createElement('thead');
                 const headerRow = document.createElement('tr');
                 const headers = ['日期', '登记时间', '栋号', '宿舍号', '取件码', '快递单号', '备注'];
-                
+
                 headers.forEach(headerText => {
                     const th = document.createElement('th');
                     th.textContent = headerText;
                     headerRow.appendChild(th);
                 });
-                
+
                 thead.appendChild(headerRow);
                 table.appendChild(thead);
-                
+
                 // 创建表格内容
                 const tbody = document.createElement('tbody');
                 data.forEach(item => {
                     const row = document.createElement('tr');
-                    
+
                     const fields = [
                         item.time,
                         item.insert_time,
@@ -420,16 +382,16 @@
                         item.expressNumber,
                         item.notes || '无'
                     ];
-                    
+
                     fields.forEach(value => {
                         const td = document.createElement('td');
                         td.textContent = value;
                         row.appendChild(td);
                     });
-                    
+
                     tbody.appendChild(row);
                 });
-                
+
                 table.appendChild(tbody);
                 resultsDiv.appendChild(table);
             }

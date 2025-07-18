@@ -22,7 +22,6 @@ function renderTable(data, style = '') {
         const row = document.createElement('tr');
 
         row.innerHTML = `
-                    <td>${item.id}</td>
                     <td>${item.building}</td>
                     <td>${item.room}</td>
                     <td>${item.pickupCode}</td>
