@@ -193,18 +193,41 @@ function deleteRecord(id) {
     });
 }
 
-function setToday() {
-    //设置当天time
-    let pickup_time_add = document.getElementById('pickup-time-add');
-    //设置value为当前时间
-    var today = new Date();
-    var year = today.getFullYear();
-    var month = today.getMonth() + 1; // 月份从0开始，需要加1
-    var day = today.getDate();
-    // 格式化为"yyyy-mm-dd"的日期字符串
-    var formattedDate = year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
-    pickup_time_add.value = formattedDate;
-    document.getElementById("date-select").value = formattedDate;//主页面的日期选择器
+function setToday(type = 'null') {
+    if (type == 'null') {
+        let localStorage_date = localStorage.getItem(getUrlParam('localToken'));
+        if (localStorage_date != null && localStorage_date != '') {
+            dateSelect.value = localStorage_date;
+        } else {
+            //设置当天time
+            let pickup_time_add = document.getElementById('pickup-time-add');
+            //设置value为当前时间
+            var today = new Date();
+            var year = today.getFullYear();
+            var month = today.getMonth() + 1; // 月份从0开始，需要加1
+            var day = today.getDate();
+            // 格式化为"yyyy-mm-dd"的日期字符串
+            var formattedDate = year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
+            pickup_time_add.value = formattedDate;
+            dateSelect.value = formattedDate;//主页面的日期选择器
+        }
+    } else if (type == 'today') {
+        //设置当天time
+        let pickup_time_add = document.getElementById('pickup-time-add');
+        //设置value为当前时间
+        var today = new Date();
+        var year = today.getFullYear();
+        var month = today.getMonth() + 1; // 月份从0开始，需要加1
+        var day = today.getDate();
+        // 格式化为"yyyy-mm-dd"的日期字符串
+        var formattedDate = year + "-" + (month < 10 ? "0" + month : month) + "-" + (day < 10 ? "0" + day : day);
+        pickup_time_add.value = formattedDate;
+        dateSelect.value = formattedDate;//主页面的日期选择器
+        removeAllUrlParams();
+        delAllLocalToken();
+        getData();
+        top.showMessage('已更新为当天数据');
+    }
 }
 
 //获取今天有多少单
@@ -413,7 +436,7 @@ function qu() {
 // 获取核心数据
 function getData() {
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', $HOST + '/getData.php?' + `type=${document.getElementById('date-select').value}&token=${getToken()}`, true);
+    xhr.open('GET', $HOST + '/getData.php?' + `type=${dateSelect.value}&token=${getToken()}`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
@@ -432,6 +455,17 @@ function getData() {
         }
     };
     xhr.send();
+}
+
+//删除所有本地token
+function delAllLocalToken() {
+    //删除所有$开头的localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+        let key = localStorage.key(i);
+        if (key.startsWith("$")) {
+            localStorage.removeItem(key);
+        }
+    }
 }
 
 // 初始化页面
@@ -494,6 +528,10 @@ function init() {
         top.showMessage('选择的日期：' + dateSelect.value);
         document.getElementById("todayNum").innerText = "xx";
         document.getElementById("monthNum").innerText = "xx";
+        let localKey = generateToken();
+        delAllLocalToken();
+        localStorage.setItem(localKey, dateSelect.value);
+        updateUrlParam("localToken", localKey);
         setTotalNum();
         getData();//更新数据
     });
@@ -551,6 +589,17 @@ function exportData() {
     }
     xhr.send();
 }
+
+//生成一个6位随机令牌
+function generateToken() {
+    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let t = '';
+    for (let i = 0; i < 6; i++) {
+        t += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return '$' + t;
+}
+
 
 // 页面加载完成后初始化
 window.addEventListener('DOMContentLoaded', init);

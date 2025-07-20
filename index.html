@@ -48,7 +48,7 @@
 
         <div class="filters">
             <div class="date-filter">
-                <label for="date-select"><i class="fas fa-calendar-alt"></i> 选择日期：</label>
+                <label for="date-select" ondblclick="setToday('today')" style="user-select: none;"><i class="fas fa-calendar-alt"></i> 选择日期：</label>
                 <input type="date" id="date-select">
             </div>
             <div class="action-buttons" id="action-buttons" style="display: none;">
@@ -230,9 +230,10 @@
         // 初始化页面
         document.addEventListener('DOMContentLoaded', () => {
             //获取系统主题
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? '深色模式' : '浅色模式';
+            top.showMessage(systemTheme);
             // 获取用户设置的主题
-            if (systemTheme === 'dark') {
+            if (systemTheme === '深色模式') {
                 enableDarkMode();
             } else {
                 disableDarkMode();

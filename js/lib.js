@@ -73,7 +73,8 @@ function getToken() {
 //退出登录
 function loginOut() {
 
-    localStorage.removeItem("token");
+    // localStorage.removeItem("token");
+    localStorage.clear();
     top.location.reload();
 }
 
@@ -93,4 +94,49 @@ function getUrlParam(name, url) {
 
     // 解码URL参数值
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+/**
+ * 添加或修改URL参数（不刷新页面）
+ * @param {string} key - 参数名
+ * @param {string} value - 参数值
+ * @param {boolean} [replace=false] - 是否替换当前历史记录（默认添加新记录）
+ */
+function updateUrlParam(key, value, replace = false) {
+    // 创建当前URL的解析对象
+    const url = new URL(window.location.href);
+
+    // 检查参数是否存在
+    const hasParam = url.searchParams.has(key);
+
+    // 存在则修改，不存在则添加
+    url.searchParams.set(key, value);
+
+    // 构建新URL（保留哈希部分）
+    const newUrl = url.pathname + url.search + url.hash;
+
+    // 使用History API更新URL（不刷新页面）
+    const historyMethod = replace ? 'replaceState' : 'pushState';
+    window.history[historyMethod]({ key, value }, document.title, newUrl);
+
+    console.log(`参数 "${key}" ${hasParam ? '已修改' : '已创建'}: ${newUrl}`);
+}
+
+/**
+ * 移除URL中所有查询参数（不刷新页面）
+ * @param {boolean} [replace=true] - 是否替换当前历史记录（默认替换，不产生新记录）
+ */
+function removeAllUrlParams(replace = true) {
+    // 获取当前路径和哈希部分
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+
+    // 构建不含参数的URL
+    const newUrl = path + (hash || '');
+
+    // 使用History API更新URL
+    const historyMethod = replace ? 'replaceState' : 'pushState';
+    window.history[historyMethod]({}, document.title, newUrl);
+
+    console.log('已移除所有URL参数:', newUrl);
 }
