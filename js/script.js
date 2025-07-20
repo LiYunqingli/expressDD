@@ -511,5 +511,46 @@ function init() {
     setTotalNum();
 }
 
+//导出所有数据到xlsx
+function exportData() {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', $HOST + '/getAllData.php?token=' + getToken(), true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let data = JSON.parse(xhr.responseText);
+            if (data.code == 200) {
+                top.showMessage(data.msg);
+                data = data.data;
+                let users = data.users;
+                let _data = data.data;
+                let building = data.building;
+
+                let wb = XLSX.utils.book_new();
+                let ws1 = XLSX.utils.json_to_sheet(users);
+                let ws2 = XLSX.utils.json_to_sheet(building);
+                let ws3 = XLSX.utils.json_to_sheet(_data);
+                XLSX.utils.book_append_sheet(wb, ws1, 'users');
+                XLSX.utils.book_append_sheet(wb, ws2, 'building');
+                XLSX.utils.book_append_sheet(wb, ws3, 'data');
+                //获取现在的时间，按照year_month_day_hour_minute_second命名
+                let now = new Date();
+                let year = now.getFullYear();
+                let month = now.getMonth() + 1;
+                let day = now.getDate();
+                let hour = now.getHours();
+                let minute = now.getMinutes();
+                let second = now.getSeconds();
+                let filename = year + '_' + month + '_' + day + '_' + hour + '_' + minute + '_' + second + '.xlsx';
+                XLSX.writeFile(wb, filename);
+                top.showMessage("导出成功", 5000);
+            } else {
+                top.showMessage(data.msg, 3000, "red")
+            }
+        }
+    }
+    xhr.send();
+}
+
 // 页面加载完成后初始化
 window.addEventListener('DOMContentLoaded', init);

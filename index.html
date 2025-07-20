@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./css/confirm-dialog.css">
     <script src="./js/showMessage.js"></script>
     <script src="./js/darkreader.min.js"></script>
+    <script src="./js/xlsx.full.min.js.js"></script>
     <script>
         //本地检查登录状态
         if (!checkLoginToken()) {
@@ -54,7 +55,7 @@
                 <button class="btn btn-success" id="add-record">
                     <i class="fas fa-plus"></i> 新增记录
                 </button>
-                <button class="btn btn-primary">
+                <button class="btn btn-primary" onclick="exportData()">
                     <i class="fas fa-download"></i> 导出数据
                 </button>
             </div>
