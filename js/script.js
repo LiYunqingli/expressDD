@@ -549,44 +549,84 @@ function init() {
     setTotalNum();
 }
 
-//导出所有数据到xlsx
+// 导出所有数据到xlsx（支持URL下载）
 function exportData() {
     let xhr = new XMLHttpRequest();
     xhr.open('GET', $HOST + '/getAllData.php?token=' + getToken(), true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.responseType = 'json'; // 设置响应类型为JSON，自动解析
+    
     xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            let data = JSON.parse(xhr.responseText);
-            if (data.code == 200) {
-                top.showMessage(data.msg);
-                data = data.data;
-                let users = data.users;
-                let _data = data.data;
-                let building = data.building;
-
-                let wb = XLSX.utils.book_new();
-                let ws1 = XLSX.utils.json_to_sheet(users);
-                let ws2 = XLSX.utils.json_to_sheet(building);
-                let ws3 = XLSX.utils.json_to_sheet(_data);
-                XLSX.utils.book_append_sheet(wb, ws1, 'users');
-                XLSX.utils.book_append_sheet(wb, ws2, 'building');
-                XLSX.utils.book_append_sheet(wb, ws3, 'data');
-                //获取现在的时间，按照year_month_day_hour_minute_second命名
-                let now = new Date();
-                let year = now.getFullYear();
-                let month = now.getMonth() + 1;
-                let day = now.getDate();
-                let hour = now.getHours();
-                let minute = now.getMinutes();
-                let second = now.getSeconds();
-                let filename = year + '_' + month + '_' + day + '_' + hour + '_' + minute + '_' + second + '.xlsx';
-                XLSX.writeFile(wb, filename);
-                top.showMessage("导出成功", 5000);
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                const data = xhr.response;
+                if (data.code == 200) {
+                    top.showMessage(data.msg);
+                    
+                    // 准备数据
+                    const { users, data: _data, building } = data.data;
+                    
+                    // 1. 创建工作簿
+                    const wb = XLSX.utils.book_new();
+                    
+                    // 2. 创建工作表
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(users), '用户表');
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(building), '建筑表');
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(_data), '数据表');
+                    
+                    // 3. 生成文件名（格式：年月日_时分秒.xlsx）
+                    const now = new Date();
+                    const filename = [
+                        now.getFullYear(),
+                        String(now.getMonth() + 1).padStart(2, '0'),
+                        String(now.getDate()).padStart(2, '0')
+                    ].join('') + '_' + [
+                        String(now.getHours()).padStart(2, '0'),
+                        String(now.getMinutes()).padStart(2, '0'),
+                        String(now.getSeconds()).padStart(2, '0')
+                    ].join('') + '.xlsx';
+                    
+                    // 4. 实现URL下载方式
+                    const excelData = XLSX.write(wb, {
+                        bookType: 'xlsx',
+                        type: 'array' // 生成二进制数组
+                    });
+                    
+                    // 创建Blob对象
+                    const blob = new Blob([excelData], {
+                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    });
+                    
+                    // 创建下载链接
+                    const url = URL.createObjectURL(blob);
+                    
+                    // 5. 创建并触发下载
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    
+                    // 清理
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url); // 释放内存
+                    }, 100);
+                    
+                    top.showMessage("导出成功", 5000);
+                } else {
+                    top.showMessage(data.msg, 3000, "red");
+                }
             } else {
-                top.showMessage(data.msg, 3000, "red")
+                top.showMessage("请求失败，状态码: " + xhr.status, 3000, "red");
             }
         }
-    }
+    };
+    
+    xhr.onerror = function() {
+        top.showMessage("请求发生错误", 3000, "red");
+    };
+    
     xhr.send();
 }
 
