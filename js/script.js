@@ -416,6 +416,20 @@ function qu() {
     });
 
     // 5. 排序type_num（数字开头的）
+
+    // 在排序前，第一个-前面的数字如果不够两位数字，补0
+    type_num.forEach(item => {
+        const code = item.pickupCode;
+        const parts = code.split('-');
+        if (parts.length > 1) {
+            parts[0] = parts[0].padStart(2, '0');
+            item.pickupCode = parts.join('-');
+        }
+    })
+
+    console.log("fdsa")
+    console.log(type_num);
+
     type_num.sort((a, b) => {
         return a.pickupCode.localeCompare(b.pickupCode);
     });
