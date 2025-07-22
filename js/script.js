@@ -602,7 +602,7 @@ function exportData() {
                     
                     // 5. 创建并触发下载
                     const a = document.createElement('a');
-                    a.href = url;
+                    a.href = url + "?filename=" + filename;
                     a.download = filename;
                     document.body.appendChild(a);
                     a.click();
