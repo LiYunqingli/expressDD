@@ -1,6 +1,6 @@
 <?php
 
-//次文件是新建数据
+//增加数据的接口
 
 
 //获取json数据
@@ -20,15 +20,27 @@ if (!empty($data)) {
             $time = $data['time'];
             $building = $data['building'];
             $room = $data['room'];
-            $pickupCode = $data['pickupCode'];
-            $expressNumber = $data['expressNumber'];
+            // $pickupCode = $data['pickupCode'];
+            // $expressNumber = $data['expressNumber'];
+            $codes = $data['codes'];
             $notes = $data['notes'];
-            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes) VALUES('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes')";
+
+            $values = "";
+            for ($i = 0; $i < count($codes); $i++){
+                $code = $codes[$i];
+                $pickupCode = $code['pickupCode'];
+                $expressNumber = $code['expressNumber'];
+                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes'),";
+            }
+            $values = rtrim($values, ',');
+            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes) VALUES $values";
+            // echo $sql;
+            // echo json_encode($codes);
             $result = mysqli_query($conn, $sql);
             if ($result) {
                 $arr = array(
                     "code" => 200,
-                    "msg" => "添加成功"
+                    "msg" => "成功添加'" . count($codes) . "' 条记录"
                 );
             }else{
                 $arr = array(

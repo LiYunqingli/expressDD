@@ -65,8 +65,8 @@ function openAddModal() {
     // 重置表单
     document.getElementById('building-add').value = '';
     document.getElementById('room-add').value = '';
-    document.getElementById('pickup-code-add').value = '';
-    document.getElementById('express-number-add').value = '';
+    // document.getElementById('pickup-code-add').value = '';
+    // document.getElementById('express-number-add').value = '';
     document.getElementById('notes-add').value = '';
 
     addModal.style.display = 'flex';
@@ -97,17 +97,68 @@ function closeModal() {
     editModal.style.display = 'none';
 }
 
+// 检查多条记录
+function addRecordCheck() {
+    let all = document.querySelectorAll("#express-groups-container .express-group");
+    if (all.length == 1) {
+        // 允许空记录
+    } else {
+        for (let i = 1; i < all.length; i++) {
+            let nowEle = all[i];
+            nowEle = nowEle.children[1];
+            let pickupCode = nowEle.children[0].querySelector("input").value;
+            let expressNumber = nowEle.children[1].querySelector("input").value;
+            //如果两个都为空，则删除
+            if (pickupCode == "" && expressNumber == "") {
+                nowEle.parentElement.remove();
+            }
+        }
+        //更新all
+        all = document.querySelectorAll("#express-groups-container .express-group");
+        //还需要检查，如果数量大于二则需要判断第一个元素
+        if (all.length > 1) {
+            let nowEle = all[0];
+            nowEle = nowEle.children[1];
+            let pickupCode = nowEle.children[0].querySelector("input").value;
+            let expressNumber = nowEle.children[1].querySelector("input").value;
+            //如果两个都为空，则删除
+            if (pickupCode == "" && expressNumber == "") {
+                nowEle.parentElement.remove();
+            }
+        }
+        all = document.querySelectorAll("#express-groups-container .express-group");
+        top.showMessage("已删除空记录");
+        console.log(all);
+    }
+    return all;
+}
+
 // 添加新记录
 function addRecord() {
+    let all = addRecordCheck();
+    let type;
+    let codes = [];
+    for (let i = 0; i < all.length; i++) {
+        let nowEle = all[i];
+        nowEle = nowEle.children[1];
+        // 其中第一个div里面的input
+        let pickupCode = nowEle.children[0].querySelector("input").value;
+        let expressNumber = nowEle.children[1].querySelector("input").value;
+        codes.push({
+            pickupCode: pickupCode,
+            expressNumber: expressNumber
+        })
+    }
     const newRecord = {
         token: getToken(),
+        type: type,
         time: document.getElementById('pickup-time-add').value,
         building: document.querySelector('#building-add select').value,
         room: document.getElementById('room-add').value,
-        pickupCode: document.getElementById('pickup-code-add').value,
-        expressNumber: document.getElementById('express-number-add').value,
+        codes: codes,
         notes: document.getElementById('notes-add').value
     };
+    console.log(newRecord);
     let xhr = new XMLHttpRequest();
     xhr.open("POST", $HOST + "/addData.php", true);
     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
@@ -569,25 +620,25 @@ function exportData() {
     xhr.open('GET', $HOST + '/getAllData.php?token=' + getToken(), true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.responseType = 'json'; // 设置响应类型为JSON，自动解析
-    
+
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
                 const data = xhr.response;
                 if (data.code == 200) {
                     top.showMessage(data.msg);
-                    
+
                     // 准备数据
                     const { users, data: _data, building } = data.data;
-                    
+
                     // 1. 创建工作簿
                     const wb = XLSX.utils.book_new();
-                    
+
                     // 2. 创建工作表
                     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(users), '用户表');
                     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(building), '建筑表');
                     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(_data), '数据表');
-                    
+
                     // 3. 生成文件名（格式：年月日_时分秒.xlsx）
                     const now = new Date();
                     const filename = [
@@ -599,34 +650,34 @@ function exportData() {
                         String(now.getMinutes()).padStart(2, '0'),
                         String(now.getSeconds()).padStart(2, '0')
                     ].join('') + '.xlsx';
-                    
+
                     // 4. 实现URL下载方式
                     const excelData = XLSX.write(wb, {
                         bookType: 'xlsx',
                         type: 'array' // 生成二进制数组
                     });
-                    
+
                     // 创建Blob对象
                     const blob = new Blob([excelData], {
                         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                     });
-                    
+
                     // 创建下载链接
                     const url = URL.createObjectURL(blob);
-                    
+
                     // 5. 创建并触发下载
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = filename;
                     document.body.appendChild(a);
                     a.click();
-                    
+
                     // 清理
                     setTimeout(() => {
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url); // 释放内存
                     }, 100);
-                    
+
                     top.showMessage("导出成功", 5000);
                 } else {
                     top.showMessage(data.msg, 3000, "red");
@@ -636,11 +687,11 @@ function exportData() {
             }
         }
     };
-    
-    xhr.onerror = function() {
+
+    xhr.onerror = function () {
         top.showMessage("请求发生错误", 3000, "red");
     };
-    
+
     xhr.send();
 }
 
