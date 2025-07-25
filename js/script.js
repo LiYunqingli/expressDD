@@ -20,6 +20,10 @@ function renderTable(data, style = '') {
     tableBody.innerHTML = '';
     data.forEach(item => {
         const row = document.createElement('tr');
+        row.id = "_" + item.id;
+        row.onclick = () => {
+            clickRow(`_${item.id}`);
+        }
 
         row.innerHTML = `
                     <td>${item.building}</td>
@@ -57,6 +61,31 @@ function renderTable(data, style = '') {
         }
 
     });
+}
+
+function clickRow(id) {
+    let clickedRowTds = document.querySelectorAll(`#${id} td`);
+    let building = clickedRowTds[0].innerText;
+    let room = clickedRowTds[1].innerText;
+    top.showMessage(`点击了'${building},${room}'`)
+    let allRow = document.querySelectorAll("#records-table tbody tr");
+    allRow.forEach((row) => {
+        // console.log(row);
+        //#e3f2fd
+        let _building = row.querySelector('td:nth-child(1)').innerText;
+        let _room = row.querySelector('td:nth-child(2)').innerText;
+        if (_building == building && _room == room) {
+            if (row.style.backgroundColor == '#e3f2fd' || row.style.backgroundColor == 'rgb(227, 242, 253)') {
+                //去掉行内样式
+                row.style.backgroundColor = '';
+            } else {
+                row.style.backgroundColor = '#e3f2fd';
+            }
+        } else {
+            //去掉行内样式
+            row.style.backgroundColor = '';
+        }
+    })
 }
 
 
