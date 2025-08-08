@@ -67,7 +67,7 @@ function clickRow(id) {
     let clickedRowTds = document.querySelectorAll(`#${id} td`);
     let building = clickedRowTds[0].innerText;
     let room = clickedRowTds[1].innerText;
-    top.showMessage(`点击了'${building},${room}'`)
+    top.showMessage(`已选中 "${building} ${room}"`)
     let allRow = document.querySelectorAll("#records-table tbody tr");
     allRow.forEach((row) => {
         // console.log(row);

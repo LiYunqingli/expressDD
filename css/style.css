@@ -167,16 +167,16 @@ h1 {
 .content {
     background: white;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: auto;
     box-shadow: var(--shadow);
     margin-bottom: 30px;
-    overflow-x: auto;
+    max-height: 800px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 800px;
+    min-width: 600px;
 }
 
 th,
@@ -191,6 +191,15 @@ th {
     font-weight: 600;
     color: var(--dark);
 }
+
+thead{
+
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid #ddd;
+}
+
 
 tr:last-child td {
     border-bottom: none;
