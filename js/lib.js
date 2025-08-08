@@ -7,7 +7,7 @@
 
 // ----------------------------------
 
-/* 主机地址 */const $MAIN = "https://gitea.lihuarong.cn:8080";
+/* 主机地址 */const $MAIN = "https://kd.lihuarong.cn:8080";
 
 const $HOST = $MAIN + "/php";
 const $HOST_HOME = $MAIN + "/login.html"//登录页
