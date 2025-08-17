@@ -17,6 +17,7 @@ let activeTab = 'deliver';
 let currentEditId = null;
 // 渲染表格数据
 function renderTable(data, style = '') {
+    // return;
     tableBody.innerHTML = '';
     data.forEach(item => {
         const row = document.createElement('tr');
@@ -646,83 +647,93 @@ function init() {
 
 // 导出所有数据到xlsx（支持URL下载）
 function exportData() {
-    let xhr = new XMLHttpRequest();
-    xhr.open('GET', $HOST + '/getAllData.php?token=' + getToken(), true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.responseType = 'json'; // 设置响应类型为JSON，自动解析
 
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                const data = xhr.response;
-                if (data.code == 200) {
-                    top.showMessage(data.msg);
+    confirmDialog.show({
+        title: "确认开始下载备份吗？",
+        message: "确认后将下载xlsx文件，请确保浏览器允许下载。",
+        onConfirm: () => {
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', $HOST + '/getAllData.php?token=' + getToken(), true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.responseType = 'json'; // 设置响应类型为JSON，自动解析
 
-                    // 准备数据
-                    const { users, data: _data, building } = data.data;
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        const data = xhr.response;
+                        if (data.code == 200) {
+                            top.showMessage(data.msg);
 
-                    // 1. 创建工作簿
-                    const wb = XLSX.utils.book_new();
+                            // 准备数据
+                            const { users, data: _data, building } = data.data;
 
-                    // 2. 创建工作表
-                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(users), '用户表');
-                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(building), '建筑表');
-                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(_data), '数据表');
+                            // 1. 创建工作簿
+                            const wb = XLSX.utils.book_new();
 
-                    // 3. 生成文件名（格式：年月日_时分秒.xlsx）
-                    const now = new Date();
-                    const filename = [
-                        now.getFullYear(),
-                        String(now.getMonth() + 1).padStart(2, '0'),
-                        String(now.getDate()).padStart(2, '0')
-                    ].join('') + '_' + [
-                        String(now.getHours()).padStart(2, '0'),
-                        String(now.getMinutes()).padStart(2, '0'),
-                        String(now.getSeconds()).padStart(2, '0')
-                    ].join('') + '.xlsx';
+                            // 2. 创建工作表
+                            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(users), '用户表');
+                            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(building), '建筑表');
+                            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(_data), '数据表');
 
-                    // 4. 实现URL下载方式
-                    const excelData = XLSX.write(wb, {
-                        bookType: 'xlsx',
-                        type: 'array' // 生成二进制数组
-                    });
+                            // 3. 生成文件名（格式：年月日_时分秒.xlsx）
+                            const now = new Date();
+                            const filename = [
+                                now.getFullYear(),
+                                String(now.getMonth() + 1).padStart(2, '0'),
+                                String(now.getDate()).padStart(2, '0')
+                            ].join('') + '_' + [
+                                String(now.getHours()).padStart(2, '0'),
+                                String(now.getMinutes()).padStart(2, '0'),
+                                String(now.getSeconds()).padStart(2, '0')
+                            ].join('') + '.xlsx';
 
-                    // 创建Blob对象
-                    const blob = new Blob([excelData], {
-                        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-                    });
+                            // 4. 实现URL下载方式
+                            const excelData = XLSX.write(wb, {
+                                bookType: 'xlsx',
+                                type: 'array' // 生成二进制数组
+                            });
 
-                    // 创建下载链接
-                    const url = URL.createObjectURL(blob);
+                            // 创建Blob对象
+                            const blob = new Blob([excelData], {
+                                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            });
 
-                    // 5. 创建并触发下载
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
+                            // 创建下载链接
+                            const url = URL.createObjectURL(blob);
 
-                    // 清理
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url); // 释放内存
-                    }, 100);
+                            // 5. 创建并触发下载
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
 
-                    top.showMessage("导出成功", 5000);
-                } else {
-                    top.showMessage(data.msg, 3000, "red");
+                            // 清理
+                            setTimeout(() => {
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url); // 释放内存
+                            }, 100);
+
+                            top.showMessage("导出成功", 5000);
+                        } else {
+                            top.showMessage(data.msg, 3000, "red");
+                        }
+                    } else {
+                        top.showMessage("请求失败，状态码: " + xhr.status, 3000, "red");
+                    }
                 }
-            } else {
-                top.showMessage("请求失败，状态码: " + xhr.status, 3000, "red");
-            }
+            };
+
+            xhr.onerror = function () {
+                top.showMessage("请求发生错误", 3000, "red");
+            };
+
+            xhr.send();
+        },
+        onCancel: () => {
+            console.log("删除操作已取消");
         }
-    };
-
-    xhr.onerror = function () {
-        top.showMessage("请求发生错误", 3000, "red");
-    };
-
-    xhr.send();
+    });
 }
 
 //生成一个6位随机令牌
