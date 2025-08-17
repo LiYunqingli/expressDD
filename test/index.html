@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发送</title>
+</head>
+
+<body>
+    <div>
+        <label for="user">发送到用户：</label>
+        <input type="text" name="user" id="user" placeholder="请输入要发送的用户名">
+    </div>
+    <div>
+        <label for="text">发送文本：</label>
+        <input type="text" name="text" id="text" placeholder="请输入要发送的内容">
+    </div>
+    <div>
+        <button onclick="send()">发送</button>
+    </div>
+</body>
+<script>
+    const user = document.getElementById('user');
+    const text = document.getElementById('text');
+    user.value = 'admin';
+    function send() {
+        if (text.value && user.value) {
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', './php/send.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code === 200) {
+                        alert('发送成功');
+                    } else {
+                        alert('发送失败');
+                    }
+                }
+            }
+            xhr.send("text=" + text.value + "&user=" + user.value);
+        } else {
+            alert('发送文本以及用户不能为空');
+        }
+    }
+</script>
+
+</html>

@@ -26,6 +26,7 @@ function renderTable(data, style = '') {
         }
 
         row.innerHTML = `
+                    <td></td>
                     <td>${item.building}</td>
                     <td>${item.room}</td>
                     <td>${item.pickupCode}</td>

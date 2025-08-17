@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接收测试</title>
+</head>
+
+<body>
+    <label for="user">用户：</label>
+    <input type="text" id="user" placeholder="用户名">
+    <table>
+        <tr>
+            <th>id</th>
+            <th>user</th>
+            <th>msg</th>
+            <th>time</th>
+        </tr>
+        <tbody id="insert">
+            <!-- <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr> -->
+        </tbody>
+    </table>
+</body>
+<script>
+    // 改为使用最后获取的消息时间，而不是整个表格的最后一行
+    var lastFetchedTime = "2000-01-01 00:00:00";
+    document.getElementById("user").value = "admin";
+    get();
+    setInterval(get, 1000);
+
+    function get() {
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', './php/get.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                let response = JSON.parse(xhr.responseText);
+                if (response.code == 200) {
+                    let data = response.data;
+                    let newLastTime = lastFetchedTime; // 初始化新时间为当前时间
+
+                    for (let i = 0; i < data.length; i++) {
+                        let tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${data[i].id}</td>
+                            <td>${data[i].user}</td>
+                            <td>${data[i].msg}</td>
+                            <td>${data[i].time}</td>
+                        `;
+                        document.getElementById('insert').appendChild(tr);
+
+                        // 更新为当前处理消息的时间（保证是最大的）
+                        newLastTime = data[i].time;
+                    }
+
+                    // 重要：更新全局时间变量（使用最后一条消息的时间）
+                    if (data.length > 0) {
+                        lastFetchedTime = newLastTime;
+                    }
+                } else {
+                    console.log(response.msg);
+                }
+            }
+        }
+        xhr.send("time=" + encodeURIComponent(lastFetchedTime) + "&user=" + document.getElementById("user").value);
+    }
+</script>
+
+</html>
