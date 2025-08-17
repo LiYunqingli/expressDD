@@ -27,7 +27,10 @@ function renderTable(data, style = '') {
         }
 
         row.innerHTML = `
-                    <td></td>
+                    <td>
+                        <span>admin</span>
+                        <span class="status">未送达</span>
+                    </td>
                     <td>${item.building}</td>
                     <td>${item.room}</td>
                     <td>${item.pickupCode}</td>
