@@ -736,5 +736,106 @@ function generateToken() {
 }
 
 
+// 增加数据（多条数据多组数据插入）
+document.addEventListener('DOMContentLoaded', function () {
+    let groupCount = 1;
+    const container = document.getElementById('express-groups-container');
+
+    // 添加新组
+    document.getElementById('add-group-btn').addEventListener('click', function () {
+        groupCount++;
+        const newGroup = document.createElement('div');
+        newGroup.className = 'express-group';
+        newGroup.style = `
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    padding: 10px;
+                    margin-bottom: 10px;
+                    background: #f9f9f9;
+                `;
+
+        newGroup.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-weight: bold; color: #3498db;">包裹 #${groupCount}</span>
+                        <button class="remove-group-btn" style="
+                            background: #e74c3c;
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            cursor: pointer;
+                        ">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>取件码</label>
+                            <input type="text" placeholder="例如：A1234" name="pickup-code">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>快递尾号</label>
+                            <input type="number" placeholder="例如：5678" name="express-number">
+                        </div>
+                    </div>
+                `;
+
+        container.appendChild(newGroup);
+
+        // 启用第一组的删除按钮
+        if (groupCount > 1) {
+            document.querySelector('.express-group:first-child .remove-group-btn').disabled = false;
+        }
+
+        // 绑定删除事件
+        newGroup.querySelector('.remove-group-btn').addEventListener('click', function () {
+            newGroup.remove();
+            groupCount--;
+
+            // 更新序号
+            document.querySelectorAll('.express-group').forEach((group, index) => {
+                group.querySelector('span').textContent = `包裹 #${index + 1}`;
+            });
+
+            // 如果只剩一组，禁用删除按钮
+            if (groupCount === 1) {
+                document.querySelector('.express-group:first-child .remove-group-btn').disabled = true;
+            }
+        });
+    });
+});
+
+// 筛选数据
+function selectData(no) {
+    const trs = document.querySelectorAll('#records-table tbody tr');
+    let types = [];
+    trs.forEach(tr => {
+        let type = tr.querySelector(`td:nth-child(${no})`).innerText;
+        if (!types.includes(type)) {
+            types.push(type);
+        }
+    });
+    console.log(types);
+    // let options = [{text:'text1',selected:false},{text:'text2',selected:false}];
+    let options = types.map(type => {
+        return { text: type, selected: false };
+    });
+    radioList.show('选择需要筛选的栋', options, (selected) => {
+        top.showMessage("点击了" + selected.text);
+        delNotSelectData(selected.text, no);
+    });
+}
+function delNotSelectData(selectDataText, no) {
+    const trs = document.querySelectorAll('#records-table tbody tr');
+    trs.forEach(tr => {
+        let type = tr.querySelector(`td:nth-child(${no})`).innerText;
+        if (type != selectDataText) {
+            tr.remove();
+        }
+    });
+}
+
+
 // 页面加载完成后初始化
 window.addEventListener('DOMContentLoaded', init);
