@@ -265,6 +265,16 @@
             });
             radioList.show('选择需要筛选的栋', options, (selected) => {
                 top.showMessage("点击了" + selected.text);
+                delNotSelectData(selected.text, no);
+            });
+        }
+        function delNotSelectData(selectDataText, no) {
+            const trs = document.querySelectorAll('#records-table tbody tr');
+            trs.forEach(tr => {
+                let type = tr.querySelector(`td:nth-child(${no})`).innerText;
+                if (type != selectDataText) {
+                    tr.remove();
+                }
             });
         }
     </script>
