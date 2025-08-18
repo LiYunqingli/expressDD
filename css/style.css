@@ -167,7 +167,7 @@ h1 {
 .content {
     background: white;
     border-radius: 10px;
-    overflow: hidden;
+    overflow: auto;
     box-shadow: var(--shadow);
     margin-bottom: 30px;
     max-height: auto;
@@ -370,10 +370,25 @@ footer {
 }
 
 .status {
-    border: 1px solid red;
-    background-color: rgb(233, 102, 102);
     border-radius: 5px;
     padding: 2px 5px;
+    user-select: none;
+    cursor: pointer;
+}
+
+.status_red {
+    border: 1px solid red;
+    background-color: rgb(165, 74, 74);
+}
+
+.status_green {
+    border: 1px solid green;
+    background-color: rgb(49, 103, 52);
+}
+
+.status_yellow {
+    border: 1px solid yellow;
+    background-color: rgb(138, 132, 65);
 }
 
 @media (max-width: 768px) {
