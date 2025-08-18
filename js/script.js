@@ -610,7 +610,6 @@ function init() {
     document.getElementById('cancel-edit-btn').addEventListener('click', closeModal);
 
     // 保存按钮事件
-    document.getElementById('save-add-btn').addEventListener('click', addRecord);
     document.getElementById('save-edit-btn').addEventListener('click', updateRecord);
 
     // 点击弹窗外部关闭
@@ -840,6 +839,7 @@ function selectData(no) {
         delNotSelectData(selected.text, no);
     });
 }
+
 function delNotSelectData(selectDataText, no) {
     const trs = document.querySelectorAll('#records-table tbody tr');
     trs.forEach(tr => {
