@@ -1,0 +1,62 @@
+// showMessage.js
+top.showMessage = function (message, duration = 3000, type = 'green') {
+    // 创建消息盒子
+    const messageBox = document.createElement('div');
+    messageBox.className = 'message-box';
+    if (type === 'red') {
+        messageBox.classList.add('red');
+    }
+    messageBox.onclick = () => closeMessage(messageBox);
+
+    // 添加消息内容
+    messageBox.textContent = message;
+
+    // 创建关闭按钮
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'close-btn';
+    closeBtn.textContent = '×';
+    closeBtn.onclick = (e) => {
+        e.stopPropagation(); // 阻止冒泡
+        closeMessage(messageBox);
+    };
+    messageBox.appendChild(closeBtn);
+
+    // 将消息盒子添加到body中
+    document.body.appendChild(messageBox);
+
+    // 调整位置后再显示
+    adjustMessageBoxes();
+    setTimeout(() => messageBox.classList.add('show'), 10);
+
+    // 自动关闭
+    if (duration > 0) {
+        setTimeout(() => closeMessage(messageBox), duration);
+    }
+
+    // 关闭消息盒子
+    function closeMessage(box) {
+        if (box.isClosing) return;
+        box.isClosing = true;
+
+        box.classList.remove('show');
+        box.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'opacity' || e.propertyName === 'transform') {
+                box.remove();
+                adjustMessageBoxes();
+            }
+        }, { once: true });
+    }
+
+    // 调整消息盒子的位置
+    function adjustMessageBoxes() {
+        const messageBoxes = document.querySelectorAll('.message-box');
+        const visibleBoxes = Array.from(messageBoxes).filter(box =>
+            !box.isClosing && box.classList.contains('show')
+        );
+
+        // 计算并设置每个可见消息框的位置
+        visibleBoxes.forEach((box, index) => {
+            box.style.top = `${20 + index * (box.offsetHeight + 10)}px`;
+        });
+    }
+};

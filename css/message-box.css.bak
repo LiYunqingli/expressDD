@@ -1,0 +1,46 @@
+/* message-box.css */
+/* 消息盒子样式 */
+.message-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px;
+    padding-right: 20px;
+    background-color: rgba(76, 175, 79, 0.45);
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.5s, transform 0.5s, top 0.5s;
+    z-index: 1000;
+    /* 添加高度和边距控制 */
+    height: auto;
+    min-height: 50px;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+/* 警告颜色 */
+.red {
+    background-color: rgba(244, 67, 54, 0.48);
+}
+
+/* 消息盒子显示时的动画 */
+.message-box.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* 关闭按钮样式 */
+.close-btn {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+}
+
+/* 移除相邻选择器的间距设置 */
+/* 位置完全由JS计算控制 */
