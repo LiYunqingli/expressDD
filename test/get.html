@@ -67,7 +67,7 @@
                 }
             }
         }
-        xhr.send("time=" + encodeURIComponent(lastFetchedTime) + "&user=" + document.getElementById("user").value);
+        xhr.send("time=" + encodeURIComponent(lastFetchedTime) + "&token=" + localStorage.getItem("token"));
     }
 </script>
 
