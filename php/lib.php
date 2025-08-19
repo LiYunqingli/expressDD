@@ -93,7 +93,7 @@ function parseToken($token)
 }
 
 //检查token是否合法
-function checkToken($token, $conn)
+function checkToken($token, $conn , $type = "1")
 {
     $user_token_data = json_decode(parseToken($token), true);
     $userid = $user_token_data['username'];
@@ -109,7 +109,11 @@ function checkToken($token, $conn)
         $sql = "SELECT * FROM users WHERE userid = '$userid' AND password = '$password'";
         $result = $conn->query($sql);
         if ($result->num_rows > 0) {
-            return true;
+            if ($type == "1") {
+                return true;
+            }else{
+                return $userid;
+            }
         } else {
             return false;
         }
