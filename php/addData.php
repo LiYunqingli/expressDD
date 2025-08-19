@@ -16,7 +16,7 @@ include 'lib.php';
 if (!empty($data)) {
     $token = $data['token'];
     if (checkParm($token)) {
-        if (checkToken($token, $conn)) {
+        if (($userid = checkToken($token, $conn, "2")) != false) {
             $time = $data['time'];
             $building = $data['building'];
             $room = $data['room'];
@@ -30,10 +30,10 @@ if (!empty($data)) {
                 $code = $codes[$i];
                 $pickupCode = $code['pickupCode'];
                 $expressNumber = $code['expressNumber'];
-                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes'),";
+                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes', '$userid'),";
             }
             $values = rtrim($values, ',');
-            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes) VALUES $values";
+            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes, create_at) VALUES $values";
             // echo $sql;
             // echo json_encode($codes);
             $result = mysqli_query($conn, $sql);
