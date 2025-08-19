@@ -25,11 +25,21 @@ function renderTable(data, style = '') {
         row.onclick = () => {
             clickRow(`_${item.id}`);
         }
-
+        //未送达 red
+        //待分享 yellow
+        //已分享 green
+        let statusClass = '';
+        if (item.status === '未送达') {
+            statusClass = 'status_red';
+        } else if (item.status === '待分享') {
+            statusClass = 'status_yellow';
+        } else if (item.status === '已完成') {
+            statusClass = 'status_green';
+        }
         row.innerHTML = `
                     <td>
-                        <span>admin</span>
-                        <span class="status">未送达</span>
+                        <span>${item.create_at}</span>
+                        <span class="status ${statusClass}" onclick="statusClick('${item.status}')">${item.status}</span>
                     </td>
                     <td>${item.building}</td>
                     <td>${item.room}</td>
@@ -70,15 +80,15 @@ function renderTable(data, style = '') {
 
 function clickRow(id) {
     let clickedRowTds = document.querySelectorAll(`#${id} td`);
-    let building = clickedRowTds[0].innerText;
-    let room = clickedRowTds[1].innerText;
+    let building = clickedRowTds[1].innerText;
+    let room = clickedRowTds[2].innerText;
     top.showMessage(`已选中 "${building} ${room}"`)
     let allRow = document.querySelectorAll("#records-table tbody tr");
     allRow.forEach((row) => {
         // console.log(row);
         //#e3f2fd
-        let _building = row.querySelector('td:nth-child(1)').innerText;
-        let _room = row.querySelector('td:nth-child(2)').innerText;
+        let _building = row.querySelector('td:nth-child(2)').innerText;
+        let _room = row.querySelector('td:nth-child(3)').innerText;
         if (_building == building && _room == room) {
             if (row.style.backgroundColor == '#e3f2fd' || row.style.backgroundColor == 'rgb(227, 242, 253)') {
                 //去掉行内样式
@@ -850,6 +860,20 @@ function delNotSelectData(selectDataText, no) {
     });
 }
 
+// 点击状态按钮，不同状态执行不同的操作
+function statusClick(status) {
+    //阻止其他click事件
+    event.stopPropagation();
+    if (status == "未送达") {
+        top.showMessage("点击了未送达");
+    } else if (status == "待分享") {
+        top.showMessage("点击了待分享");
+    } else if (status == "已完成") {
+        top.showMessage("");
+    } else {
+        top.showMessage("内部数据库错误：数据中状态类型不包含'" + status + "'", 6000, "red");
+    }
+}
 
 // 页面加载完成后初始化
 window.addEventListener('DOMContentLoaded', init);
