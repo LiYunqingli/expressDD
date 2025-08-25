@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片分享</title>
+    <link rel="stylesheet" href="../css/message-box.css">
+    <link rel="stylesheet" href="./css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .image-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .image-container:hover img {
+            transform: scale(1.03);
+        }
+
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+            padding: 20px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-container:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .overlay-text {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .image-info {
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .info-item i {
+            font-size: 1.2rem;
+            margin-right: 15px;
+            color: #6a11cb;
+        }
+
+        .info-content h3 {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .info-content p {
+            font-size: 1.1rem;
+            color: #343a40;
+            font-weight: 500;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-modal:hover {
+            color: #2575fc;
+        }
+
+        /* Loading animation */
+        .loader {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .loader-circle {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #6a11cb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 20px;
+            }
+
+            .info-item {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .image-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <div class="loader">
+                    <div class="loader-circle"></div>
+                </div>
+
+                <!-- 图片信息区域 -->
+                <div class="image-info" style="display: none;">
+                    <div class="info-item">
+                        <i class="fas fa-user"></i>
+                        <div class="info-content">
+                            <h3>上传者</h3>
+                            <p id="uploader">admin</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <i class="fas fa-calendar"></i>
+                        <div class="info-content">
+                            <h3>上传时间</h3>
+                            <p id="upload-time">2025-08-25 17:36:37</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <i class="fas fa-image"></i>
+                        <div class="info-content">
+                            <h3>图片尺寸</h3>
+                            <p id="image-dimensions">计算中...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片容器区域 -->
+                <div class="image-container" style="display: none;">
+                    <img src="" alt="分享的图片">
+                    <div class="image-overlay">
+                        <div class="overlay-text">
+                            <span><i class="fas fa-expand"></i> 点击查看大图</span>
+                            <span><i class="far fa-heart"></i> 喜欢</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for enlarged image -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <img src="" alt="放大图片" id="modalImage">
+        </div>
+    </div>
+
+    <script src="../js/lib.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loader = document.querySelector('.loader');
+            const imageContainer = document.querySelector('.image-container');
+            const imageInfo = document.querySelector('.image-info');
+            const imgElement = document.querySelector('.image-container img');
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            const closeModal = document.getElementById('closeModal');
+
+            let pid = getUrlParam('pid');
+            if (pid) {
+                let xhr = new XMLHttpRequest();
+                xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + pid, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4) {
+                        if (xhr.status == 200) {
+                            let result = JSON.parse(xhr.responseText);
+                            if (result.code == 200) {
+                                console.log(result.data);
+                                let imgData = result.data[0];
+                                let imgURL = $HOST + "/uploads/" + imgData.compressed;
+
+                                // Hide loader and show content
+                                loader.style.display = 'none';
+                                imageInfo.style.display = 'grid';
+                                imageContainer.style.display = 'block';
+
+                                // Set image source
+                                imgElement.src = imgURL;
+                                imgElement.onload = function () {
+                                    // Update image dimensions
+                                    document.getElementById('image-dimensions').textContent =
+                                        this.naturalWidth + ' × ' + this.naturalHeight;
+
+                                    // Update other info
+                                    document.getElementById('uploader').textContent = imgData.userid;
+                                    document.getElementById('upload-time').textContent = imgData.upload_time;
+                                };
+
+                                // Set up modal image
+                                modalImage.src = imgURL;
+
+                            } else {
+                                top.showMessage("分享链接已失效", 10000, "red");
+                            }
+                        } else {
+                            top.showMessage("网络请求失败，请重试", 10000, "red");
+                        }
+                    }
+                };
+                xhr.send();
+            } else {
+                top.showMessage('分享链接已失效', 100000, 'red');
+            }
+
+            // Set up modal functionality
+            imageContainer.addEventListener('click', function () {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden'; // Prevent scrolling
+            });
+
+            closeModal.addEventListener('click', function () {
+                modal.classList.remove('show');
+                document.body.style.overflow = ''; // Re-enable scrolling
+            });
+
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Add keyboard support for closing modal
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal.classList.contains('show')) {
+                    modal.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            });
+        });
+    </script>
+    <script src="../js/showMessage.js"></script>
+</body>
+
+</html>
