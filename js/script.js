@@ -655,6 +655,104 @@ function init() {
         }
     });
     setTotalNum();
+
+    document.getElementById("uploadImageInput").addEventListener('change', function (event) {
+        const file = event.target.files[0];
+
+        if (file && file.type.match('image.*')) {
+            const previewImage = document.getElementById('previewImage');
+            const reader = new FileReader();
+
+            // 显示压缩中消息
+            top.showMessage('正在压缩图片...', 0, 'blue');
+
+            reader.onload = function (e) {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+
+                // 创建图片对象进行压缩
+                const img = new Image();
+                img.onload = function () {
+                    // 创建canvas进行压缩
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    // 设置最大尺寸
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    // 调整尺寸（保持比例）
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    // 修复：删除重复的canvas.height赋值
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // 修复：清理重复注释，正确调用drawImage
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // 获取压缩后的图片数据
+                    canvas.toBlob(function (compressedBlob) {
+                        // 更新消息
+                        top.showMessage('正在上传图片...', 0, 'blue');
+
+                        // 创建FormData并添加两个图片
+                        const formData = new FormData();
+                        formData.append('originalImage', file); // 原图
+                        formData.append('compressedImage', compressedBlob, 'compressed_' + file.name); // 压缩图
+
+                        // 发送到服务器
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', $HOST + '/uploadImg.php', true);
+                        // 关键修复：删除下面这行错误的Content-Type设置！
+                        // xhr.setRequestHeader('Content-Type', 'application/json'); 
+
+                        xhr.onload = function () {
+                            if (xhr.status === 200) {
+                                try {
+                                    const response = JSON.parse(xhr.responseText);
+                                    if (response.success) {
+                                        top.showMessage('图片上传成功!', 3000, 'green');
+                                    } else {
+                                        top.showMessage('上传失败: ' + response.message, 3000, 'red');
+                                    }
+                                } catch (e) {
+                                    top.showMessage('服务器响应异常', 3000, 'red');
+                                }
+                            } else {
+                                top.showMessage('上传失败，状态码: ' + xhr.status, 3000, 'red');
+                            }
+                        };
+
+                        xhr.onerror = function () {
+                            top.showMessage('上传发生错误', 3000, 'red');
+                        };
+
+                        xhr.send(formData); // 发送FormData（浏览器自动加正确的Content-Type）
+
+                    }, 'image/jpeg', 0.7); // 压缩质量70%
+                };
+                img.src = e.target.result; // 加载原图用于压缩
+            };
+
+            reader.readAsDataURL(file); // 读取文件用于预览
+        } else {
+            top.showMessage('请拍照或者选择图片文件', 3000, 'red');
+        }
+    });
+
 }
 
 // 导出所有数据到xlsx（支持URL下载）
@@ -866,6 +964,7 @@ function statusClick(status) {
     event.stopPropagation();
     if (status == "未送达") {
         top.showMessage("点击了未送达");
+        document.getElementById("uploadImageInput").click();
     } else if (status == "待分享") {
         top.showMessage("点击了待分享");
     } else if (status == "已完成") {
