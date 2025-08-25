@@ -9,7 +9,7 @@ top.showMessage = function (message, duration = 3000, type = 'green') {
     messageBox.onclick = () => closeMessage(messageBox);
 
     // 添加消息内容
-    messageBox.textContent = message;
+    messageBox.innerHTML = message;
 
     // 创建关闭按钮
     const closeBtn = document.createElement('span');
