@@ -39,7 +39,7 @@ function renderTable(data, style = '') {
         row.innerHTML = `
                     <td>
                         <span>${item.create_at}</span>
-                        <span class="status ${statusClass}" onclick="statusClick('${item.status}')">${item.status}</span>
+                        <span class="status ${statusClass}" onclick="statusClick('${item.status}', '${item.id}')">${item.status}</span>
                     </td>
                     <td>${item.building}</td>
                     <td>${item.room}</td>
@@ -660,15 +660,12 @@ function init() {
         const file = event.target.files[0];
 
         if (file && file.type.match('image.*')) {
-            const previewImage = document.getElementById('previewImage');
             const reader = new FileReader();
 
             // 显示压缩中消息
-            top.showMessage('正在压缩图片...', 0, 'blue');
+            top.showMessage('正在压缩图片...');
 
             reader.onload = function (e) {
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
 
                 // 创建图片对象进行压缩
                 const img = new Image();
@@ -706,7 +703,7 @@ function init() {
                     // 获取压缩后的图片数据
                     canvas.toBlob(function (compressedBlob) {
                         // 更新消息
-                        top.showMessage('正在上传图片...', 0, 'blue');
+                        top.showMessage('正在上传图片...');
 
                         // 创建FormData并添加两个图片
                         const formData = new FormData();
@@ -717,7 +714,8 @@ function init() {
                         const xhr = new XMLHttpRequest();
                         xhr.open('POST', $HOST + '/uploadImg.php', true);
                         // 关键修复：删除下面这行错误的Content-Type设置！
-                        // xhr.setRequestHeader('Content-Type', 'application/json'); 
+                        xhr.setRequestHeader('Token', getToken()); 
+                        xhr.setRequestHeader('ID', top.upload_image_data_id);
 
                         xhr.onload = function () {
                             if (xhr.status === 200) {
@@ -725,6 +723,22 @@ function init() {
                                     const response = JSON.parse(xhr.responseText);
                                     if (response.success) {
                                         top.showMessage('图片上传成功!', 3000, 'green');
+                                        //获取第一个tr
+                                        let now_data_item = document.querySelector("#_" + top.upload_image_data_id + " td:first-child span:nth-child(2)");
+                                        console.log(now_data_item);
+                                        //去掉这个元素的class，status_red，改为status_yellow
+                                        now_data_item.classList.remove('status_red');
+                                        now_data_item.classList.add('status_yellow');
+                                        now_data_item.innerHTML = "待分享";
+                                        //onclick改
+                                        now_data_item.setAttribute("onclick", "statusClick('待分享', '" + top.upload_image_data_id + "')");
+                                        //将top.data中的对应id的status改为"待分享"
+                                        for (let i = 0; i < top.data.length; i++) {
+                                            let now_data = top.data[i];
+                                            if (now_data.id == top.upload_image_data_id) {
+                                                top.data[i].status = "待分享";
+                                            }
+                                        }
                                     } else {
                                         top.showMessage('上传失败: ' + response.message, 3000, 'red');
                                     }
@@ -959,11 +973,12 @@ function delNotSelectData(selectDataText, no) {
 }
 
 // 点击状态按钮，不同状态执行不同的操作
-function statusClick(status) {
+function statusClick(status, id) {
     //阻止其他click事件
     event.stopPropagation();
     if (status == "未送达") {
-        top.showMessage("点击了未送达");
+        // top.showMessage("点击了未送达");
+        top.upload_image_data_id = id;
         document.getElementById("uploadImageInput").click();
     } else if (status == "待分享") {
         top.showMessage("点击了待分享");
