@@ -981,7 +981,27 @@ function statusClick(status, id) {
         top.upload_image_data_id = id;
         document.getElementById("uploadImageInput").click();
     } else if (status == "待分享") {
-        top.showMessage("点击了待分享");
+        // top.showMessage("点击了待分享");
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + id, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                let result = JSON.parse(xhr.responseText);
+                if(result.code == 200){
+                    console.log(result.data);
+                    let shareURL = $HOST + "/uploads/" + result.data[0].compressed;
+                    //将图片地址复制到剪贴板
+                    navigator.clipboard.writeText(shareURL).then(function() {
+                        top.showMessage("图片地址已复制到剪贴板", 3000, "green");
+                    })
+                    //新建标签页跳转
+                    // window.open(shareURL, '_blank');
+                }else{
+                    top.showMessage(result.msg, 3000, "red");
+                }
+            }
+        }
+        xhr.send();
     } else if (status == "已完成") {
         top.showMessage("");
     } else {
