@@ -714,7 +714,7 @@ function init() {
                         const xhr = new XMLHttpRequest();
                         xhr.open('POST', $HOST + '/uploadImg.php', true);
                         // 关键修复：删除下面这行错误的Content-Type设置！
-                        xhr.setRequestHeader('Token', getToken()); 
+                        xhr.setRequestHeader('Token', getToken());
                         xhr.setRequestHeader('ID', top.upload_image_data_id);
 
                         xhr.onload = function () {
@@ -1002,11 +1002,56 @@ function statusClick(status, id) {
         //     }
         // }
         // xhr.send();
+        // let shareURL = $MAIN + "/detail/share.html?pid=" + id;
+        // //将图片地址复制到剪贴板
+        // navigator.clipboard.writeText(shareURL).then(function() {
+        //     top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
+        // })
+        // 修改后的代码 - 添加兼容性处理
         let shareURL = $MAIN + "/detail/share.html?pid=" + id;
-        //将图片地址复制到剪贴板
-        navigator.clipboard.writeText(shareURL).then(function() {
-            top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
-        })
+
+        function copyToClipboard() {
+            // 优先尝试 Android 接口
+            if (window.AndroidClipboard && typeof AndroidClipboard.copyText === 'function') {
+                AndroidClipboard.copyText(shareURL);
+                top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
+            }
+            // 其次尝试标准剪贴板 API
+            else if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareURL).then(function () {
+                    top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
+                }).catch(function () {
+                    fallbackCopy(shareURL);
+                });
+            }
+            // 最后使用兼容性方案
+            else {
+                fallbackCopy(shareURL);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
+                } else {
+                    top.showMessage("复制失败，请手动复制", 3000, "red");
+                }
+            } catch (err) {
+                top.showMessage("无法复制: " + err, 3000, "red");
+            } finally {
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // 调用复制函数
+        copyToClipboard();
     } else if (status == "已完成") {
         top.showMessage("");
     } else {
