@@ -239,6 +239,35 @@
         </div>
     </div>
 
+    <!-- 分享弹窗 -->
+    <div class="modal" id="share-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2><i class="fas fa-share-alt"></i> 分享取件信息</h2>
+                <button class="close-btn" onclick="closeShareModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 20px;">请使用以下方式分享取件信息：</p>
+                <div class="form-group">
+                    <label>取件码图片</label>
+                    <!-- 用img标签显示图片，隐藏图片地址输入框 -->
+                    <img id="shareImage" src="" alt="取件码图片"
+                        style="max-width: 100%; border-radius: 5px; border: 1px solid #ddd; padding: 5px;">
+
+                </div>
+            </div>
+            <div style="display: flex; justify-content: end; padding-right: 20px;">
+                <button class="btn btn-success" onclick="setDataSuccess(top.upload_image_data_id)">完成</button>
+            </div>
+            <div class="modal-footer">
+                <!-- 调换删除和复制按钮的位置 -->
+                <button class="btn btn-danger" onclick="deleteDataStatus(top.upload_image_data_id)">删除</button>
+                <button class="btn btn-warning" onclick="document.getElementById('uploadImageInput').click();">修改</button>
+                <button class="btn btn-primary" id="copy-link-btn">复制链接</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" accept="image/*" capture="environment" style="display: none;" id="uploadImageInput">
     <script src="./js/radioList.js"></script>
     <script src="./js/loadLightDarkInit.js"></script>

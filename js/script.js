@@ -739,6 +739,7 @@ function init() {
                                                 top.data[i].status = "待分享";
                                             }
                                         }
+                                        window.location.reload();
                                     } else {
                                         top.showMessage('上传失败: ' + response.message, 3000, 'red');
                                     }
@@ -764,6 +765,13 @@ function init() {
             reader.readAsDataURL(file); // 读取文件用于预览
         } else {
             top.showMessage('请拍照或者选择图片文件', 3000, 'red');
+        }
+    });
+
+    // 在已有的modal事件监听后面添加
+    document.getElementById('share-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('share-modal')) {
+            closeShareModal();
         }
     });
 
@@ -976,84 +984,56 @@ function delNotSelectData(selectDataText, no) {
 function statusClick(status, id) {
     //阻止其他click事件
     event.stopPropagation();
+    top.upload_image_data_id = id;
     if (status == "未送达") {
         // top.showMessage("点击了未送达");
-        top.upload_image_data_id = id;
         document.getElementById("uploadImageInput").click();
-    } else if (status == "待分享") {
-        // top.showMessage("点击了待分享");
-        // let xhr = new XMLHttpRequest();
-        // xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + id, true);
-        // xhr.onreadystatechange = function () {
-        //     if (xhr.readyState == 4 && xhr.status == 200) {
-        //         let result = JSON.parse(xhr.responseText);
-        //         if(result.code == 200){
-        //             console.log(result.data);
-        //             let shareURL = $HOST + "/uploads/" + result.data[0].compressed;
-        //             //将图片地址复制到剪贴板
-        //             navigator.clipboard.writeText(shareURL).then(function() {
-        //                 top.showMessage("图片地址已复制到剪贴板", 3000, "green");
-        //             })
-        //             //新建标签页跳转
-        //             // window.open(shareURL, '_blank');
-        //         }else{
-        //             top.showMessage(result.msg, 3000, "red");
-        //         }
-        //     }
-        // }
-        // xhr.send();
-        // let shareURL = $MAIN + "/detail/share.html?pid=" + id;
-        // //将图片地址复制到剪贴板
-        // navigator.clipboard.writeText(shareURL).then(function() {
-        //     top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
-        // })
-        // 修改后的代码 - 添加兼容性处理
-        let shareURL = $MAIN + "/detail/share.html?pid=" + id;
+    } else if (status == "待分享" || status == "已完成") {
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + id, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        let imgURL = $HOST + "/uploads/" + result.data[0].compressed;
+                        top.shareURL = $MAIN + "/detail/share.html?pid=" + id;
+                        document.getElementById("shareImage").src = imgURL;
+                        // 打开分享弹窗
+                        openShareModal();
+                        // 为复制按钮绑定事件（确保只绑定一次）
+                        const copyBtn = document.getElementById('copy-link-btn');
+                        // 先移除可能存在的旧事件
+                        copyBtn.onclick = null;
+                        // 绑定新事件
+                        copyBtn.onclick = function () {
+                            const shareURL = top.shareURL;
 
-        function copyToClipboard() {
-            // 优先尝试 Android 接口
-            if (window.AndroidClipboard && typeof AndroidClipboard.copyText === 'function') {
-                AndroidClipboard.copyText(shareURL);
-                top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
-            }
-            // 其次尝试标准剪贴板 API
-            else if (navigator.clipboard) {
-                navigator.clipboard.writeText(shareURL).then(function () {
-                    top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
-                }).catch(function () {
-                    fallbackCopy(shareURL);
-                });
-            }
-            // 最后使用兼容性方案
-            else {
-                fallbackCopy(shareURL);
-            }
-        }
-
-        function fallbackCopy(text) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
-                } else {
-                    top.showMessage("复制失败，请手动复制", 3000, "red");
+                            // 复制逻辑（复用已有的复制函数）
+                            if (window.AndroidClipboard && typeof AndroidClipboard.copyText === 'function') {
+                                AndroidClipboard.copyText(shareURL);
+                                top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
+                            } else if (navigator.clipboard) {
+                                navigator.clipboard.writeText(shareURL).then(function () {
+                                    top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
+                                }).catch(function () {
+                                    fallbackCopy(shareURL);
+                                });
+                            } else {
+                                fallbackCopy(shareURL);
+                            }
+                        };
+                    } else {
+                        top.showMessage(result.msg, 3000, "red");
+                    }
                 }
-            } catch (err) {
-                top.showMessage("无法复制: " + err, 3000, "red");
-            } finally {
-                document.body.removeChild(textArea);
             }
-        }
+        };
+        xhr.send();
 
-        // 调用复制函数
-        copyToClipboard();
-    } else if (status == "已完成") {
-        top.showMessage("");
+
+
+
     } else {
         top.showMessage("内部数据库错误：数据中状态类型不包含'" + status + "'", 6000, "red");
     }
@@ -1061,3 +1041,59 @@ function statusClick(status, id) {
 
 // 页面加载完成后初始化
 window.addEventListener('DOMContentLoaded', init);
+
+// 打开分享弹窗
+function openShareModal() {
+    document.getElementById('share-modal').style.display = 'flex';
+}
+
+// 关闭分享弹窗
+function closeShareModal() {
+    document.getElementById('share-modal').style.display = 'none';
+}
+
+// 设置当前快递为完成
+function setDataSuccess(id) {
+    let xhr = new XMLHttpRequest();
+    xhr.open('POST', $HOST + '/setDataSuccess.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let result = JSON.parse(xhr.responseText);
+            if (result.code === 200) {
+                top.showMessage(result.msg);
+                closeShareModal()
+                setTimeout(function () {
+                    window.location.reload();
+                }, 1000)
+            }else{
+                top.showMessage(result.msg, 3000, 'red');
+            }
+        }
+    };
+    xhr.send(`id=${id}&token=${getToken()}`)
+}
+
+// 删除当前快递的图片数据
+function deleteDataStatus(id){
+    let xhr = new XMLHttpRequest();
+    xhr.open('POST', $HOST + '/deleteDataStatus.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let result = JSON.parse(xhr.responseText);
+            if (result.code === 200) {
+                top.showMessage(result.msg);
+                closeShareModal()
+                setTimeout(function () {
+                    window.location.reload();
+                }, 1000)
+            }else if(result.code == 500){
+                top.showMessage(result.msg, 10000, 'red');
+            }else{
+                top.showMessage(result.msg, 3000, 'red');
+            }
+        }
+    };
+    xhr.send(`id=${id}&token=${getToken()}`)
+}
