@@ -6,7 +6,7 @@ include 'db.php';
 
 $pid = $_GET['pid'];
 
-$sql = "SELECT * FROM upload_img WHERE pid = '$pid'";
+$sql = "SELECT * FROM upload_img WHERE pid = '$pid' ORDER BY upload_time DESC LIMIT 1";
 
 $result = $conn->query($sql);
 
