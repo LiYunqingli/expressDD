@@ -997,7 +997,7 @@ function statusClick(status, id) {
                     let result = JSON.parse(xhr.responseText);
                     if (result.code == 200) {
                         let imgURL = $HOST + "/uploads/" + result.data[0].compressed;
-                        top.shareURL = $MAIN + "/detail/share.html?pid=" + id;
+                        top.shareURL = $MAIN + "/detail/share.html?pid=" + encrypt(id);
                         document.getElementById("shareImage").src = imgURL;
                         // 打开分享弹窗
                         openShareModal();

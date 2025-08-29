@@ -7,6 +7,7 @@
     <title>图片分享</title>
     <link rel="stylesheet" href="../css/message-box.css">
     <link rel="stylesheet" href="./css/all.min.css">
+    <script src="../js/numberEncryptor.js"></script>
     <style>
         * {
             margin: 0;
@@ -283,6 +284,11 @@
 
             let pid = getUrlParam('pid');
             if (pid) {
+                pid = decrypt(pid);
+                if (!pid) {
+                    top.showMessage("分享链接已失效", 1000000, "red");
+                    return;
+                }
                 let xhr = new XMLHttpRequest();
                 xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + pid, true);
                 xhr.onreadystatechange = function () {
@@ -315,7 +321,7 @@
                                 modalImage.src = imgURL;
 
                             } else {
-                                top.showMessage("分享链接已失效", 10000, "red");
+                                top.showMessage("分享链接已失效", 1000000, "red");
                             }
                         } else {
                             top.showMessage("网络请求失败，请重试", 10000, "red");
@@ -324,7 +330,7 @@
                 };
                 xhr.send();
             } else {
-                top.showMessage('分享链接已失效', 100000, 'red');
+                top.showMessage('分享链接已失效', 1000000, 'red');
             }
 
             // Set up modal functionality
