@@ -378,6 +378,37 @@ function loadBuilding() {
             // building-edit
             document.getElementById("building-add").innerHTML = "<select>" + shuchu + "</select>";
             document.getElementById("building-edit").innerHTML = shuchu;
+            
+            document.querySelector("#building-add select").addEventListener("change", function () {
+                console.log("change");
+                if (this.value != "null") {
+                    let b = document.getElementById("room-add").value;
+                    if(b != null && b != "" && b != undefined){
+                        searchAllRoomUserWeChatName();
+                    }else{
+                        console.log("不符合查找房间名的条件");
+                        clearFormKeHuAdd();
+                    }
+                } else {
+                    console.log("不符合查找微信名的条件");
+                    clearFormKeHuAdd();
+                }
+            });
+            document.getElementById("room-add").addEventListener("change", function () {
+                console.log("change");
+                if (this.value != "" && this.value != null && this.value != undefined) {
+                    let b = document.querySelector("#building-add select").value;
+                    if(b != "null"){
+                        searchAllRoomUserWeChatName();
+                    }else{
+                        console.log("不符合查找房间名的条件");
+                        clearFormKeHuAdd();
+                    }
+                } else {
+                    console.log("不符合查找房间名的条件");
+                    clearFormKeHuAdd();
+                }
+            });
         }
     }
     xhr.send();
