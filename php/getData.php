@@ -23,6 +23,19 @@ if (checkParm($type)) {
                 while ($row = $result->fetch_assoc()) {
                     $data[] = $row;
                 }
+                //将数据遍历出来
+                for ($i = 0; $i < count($data); $i++) {
+                    $building_users_id = $data[$i]['building_users_id'];
+                    $sql = "SELECT * FROM `building_users` WHERE `id` = '$building_users_id'";
+                    $result = $conn->query($sql);
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            $data[$i]['building_users_id'] .= ": " . $row['wechat_name'];
+                        }
+                    }else{
+                        $data[$i]['building_users_id'] .= ": null";
+                    }
+                }
                 $arr = array(
                     "code" => 200,
                     "msg" => "获取数据成功",
