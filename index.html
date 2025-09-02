@@ -207,7 +207,8 @@
     </div>
 
     <script>
-        function searchAllRoomUserWeChatName() {
+        // 当type=0的时候是监听器调用查询记录，当type!=0的时候是增加了记录后自动查询且自动选择
+        function searchAllRoomUserWeChatName(type = 0, str = "") {
             let building_str = document.querySelector("#building-add select").value;
             let room_str = document.querySelector("#room-add").value;
             if (building_str == "null" || room_str == null || room_str == "") {
@@ -233,11 +234,27 @@
                         console.log(result.data);
                         top.showMessage(result.msg);
                         let shuchu = `<option value="">请选择</option>`;
-                        for (let i = 0; i < result.data.length; i++) {
-                            let now_data = result.data[i];
-                            shuchu += `
-                                <option value="${now_data.id}">${now_data.wechat_name}</option>
-                            `;
+                        if (type == 0) {
+                            for (let i = 0; i < result.data.length; i++) {
+                                let now_data = result.data[i];
+                                shuchu += `
+                                    <option value="${now_data.id}">${now_data.wechat_name}</option>
+                                `;
+                            }
+                        } else {
+                            for (let i = 0; i < result.data.length; i++) {
+                                let now_data = result.data[i];
+                                // 如果now_data.wechat_name == str，则select中选中该项
+                                if (now_data.wechat_name == str) {
+                                    shuchu += `
+                                        <option value="${now_data.id}" selected>${now_data.wechat_name}</option>
+                                    `;
+                                } else {
+                                    shuchu += `
+                                        <option value="${now_data.id}">${now_data.wechat_name}</option>
+                                    `;
+                                }
+                            }
                         }
                         kehu_add_select.innerHTML = shuchu;
                         kehu_add_loading.style.display = "none";
@@ -259,13 +276,27 @@
         function addKeHu() {
             let building_add = document.querySelector("#building-add select").value;
             let room = document.getElementById("room-add").value;
-            if(building_add == "null" || room == ""){
+            if (building_add == "null" || room == "") {
                 top.showMessage("请选择楼栋和输入房号", 3000, 'red');
                 return;
             }
             let kehuInput = prompt("为'" + building_add + "-" + room + "'增加客户微信", "");
             if (kehuInput != null) {
-                top.showMessage(kehuInput, 3000, 'green');
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", $HOST + "/addWeChatName.php", true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        let result = JSON.parse(xhr.responseText);
+                        if (result.code == 200) {
+                            top.showMessage(result.msg);
+                            searchAllRoomUserWeChatName(1,kehuInput);
+                        } else {
+                            top.showMessage(result.msg, 3000, 'red');
+                        }
+                    }
+                };
+                xhr.send(`token=${getToken()}&building=${building_add}&room=${room}&weChatName=${kehuInput}`);
             } else {
                 console.log("取消增加客户微信");
             }
