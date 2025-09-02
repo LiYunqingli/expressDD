@@ -75,6 +75,7 @@
                         <th>取件码</th>
                         <th>尾号</th>
                         <th>备注</th>
+                        <th>微信名</th>
                         <th ondblclick="setToday('today')">更新时间</th>
                         <th class="actions-header" style="display: none;">操作</th>
                     </tr>
@@ -299,6 +300,18 @@
                 xhr.send(`token=${getToken()}&building=${building_add}&room=${room}&weChatName=${kehuInput}`);
             } else {
                 console.log("取消增加客户微信");
+            }
+        }
+
+        // 检查微信选择是否选了（增加数据不允许）
+        function checkKeHuisSelect(){
+            let kehuSelect = document.getElementById("kehu-add");
+            if(kehuSelect.style.display == "none"){
+                return false;
+            }else if(kehuSelect.value == "" || kehuSelect.value == null){
+                return false;
+            }else{
+                return true;
             }
         }
 

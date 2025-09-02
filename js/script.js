@@ -46,6 +46,7 @@ function renderTable(data, style = '') {
                     <td>${item.pickupCode}</td>
                     <td>${item.expressNumber}</td>
                     <td>${item.notes}</td>
+                    <td>${item.building_users_id}</td>
                     <td>${item.insert_time}</td>
                 `;
 
@@ -179,6 +180,10 @@ function addRecordCheck() {
 
 // 添加新记录
 function addRecord() {
+    if(!checkKeHuisSelect()){
+        top.showMessage("请选择微信名！", 3000, 'red');
+        return;
+    }
     let all = addRecordCheck();
     let type;
     let codes = [];
@@ -193,6 +198,7 @@ function addRecord() {
             expressNumber: expressNumber
         })
     }
+    let KeHuAdd = document.getElementById("kehu-add").value;
     const newRecord = {
         token: getToken(),
         type: type,
@@ -200,7 +206,8 @@ function addRecord() {
         building: document.querySelector('#building-add select').value,
         room: document.getElementById('room-add').value,
         codes: codes,
-        notes: document.getElementById('notes-add').value
+        notes: document.getElementById('notes-add').value,
+        building_users_id : KeHuAdd
     };
     console.log(newRecord);
     let xhr = new XMLHttpRequest();
