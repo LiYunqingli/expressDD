@@ -24,16 +24,17 @@ if (!empty($data)) {
             // $expressNumber = $data['expressNumber'];
             $codes = $data['codes'];
             $notes = $data['notes'];
+            $building_users_id = $data['building_users_id'];
 
             $values = "";
             for ($i = 0; $i < count($codes); $i++){
                 $code = $codes[$i];
                 $pickupCode = $code['pickupCode'];
                 $expressNumber = $code['expressNumber'];
-                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes', '$userid'),";
+                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes', '$userid', '$building_users_id'),";
             }
             $values = rtrim($values, ',');
-            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes, create_at) VALUES $values";
+            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes, create_at, building_users_id) VALUES $values";
             // echo $sql;
             // echo json_encode($codes);
             $result = mysqli_query($conn, $sql);
