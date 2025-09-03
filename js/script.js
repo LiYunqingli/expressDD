@@ -126,7 +126,7 @@ function openEditModal(id) {
 
     // 填充表单
     document.getElementById('id-edit').value = record.id;
-    document.getElementById('building-edit').value = record.building;
+    document.getElementById('building-edit-select').value = record.building;
     document.getElementById('room-edit').value = record.room;
     document.getElementById('pickup-code-edit').value = record.pickupCode;
     document.getElementById('express-number-edit').value = record.expressNumber;
@@ -180,7 +180,7 @@ function addRecordCheck() {
 
 // 添加新记录
 function addRecord() {
-    if(!checkKeHuisSelect()){
+    if (!checkKeHuisSelect()) {
         top.showMessage("请选择微信名！", 3000, 'red');
         return;
     }
@@ -207,7 +207,7 @@ function addRecord() {
         room: document.getElementById('room-add').value,
         codes: codes,
         notes: document.getElementById('notes-add').value,
-        building_users_id : KeHuAdd
+        building_users_id: KeHuAdd
     };
     console.log(newRecord);
     let xhr = new XMLHttpRequest();
@@ -236,7 +236,7 @@ function updateRecord() {
     if (record) {
         record.token = getToken();
         record.time = document.getElementById('pickup-time-edit').value;
-        record.building = document.getElementById('building-edit').value;
+        record.building = document.getElementById('building-edit-select').value;
         record.room = document.getElementById('room-edit').value;
         record.pickupCode = document.getElementById('pickup-code-edit').value;
         record.expressNumber = document.getElementById('express-number-edit').value;
@@ -382,17 +382,17 @@ function loadBuilding() {
                             <option value="${result[i].input}">${result[i].input}</option>
                         `;
             }
-            // building-edit
+            // building-edit-select
             document.getElementById("building-add").innerHTML = "<select>" + shuchu + "</select>";
-            document.getElementById("building-edit").innerHTML = shuchu;
-            
+            document.getElementById("building-edit-select").innerHTML = shuchu;
+
             document.querySelector("#building-add select").addEventListener("change", function () {
                 console.log("change");
                 if (this.value != "null") {
                     let b = document.getElementById("room-add").value;
-                    if(b != null && b != "" && b != undefined){
+                    if (b != null && b != "" && b != undefined) {
                         searchAllRoomUserWeChatName();
-                    }else{
+                    } else {
                         console.log("不符合查找房间名的条件");
                         clearFormKeHuAdd();
                     }
@@ -405,15 +405,47 @@ function loadBuilding() {
                 console.log("change");
                 if (this.value != "" && this.value != null && this.value != undefined) {
                     let b = document.querySelector("#building-add select").value;
-                    if(b != "null"){
+                    if (b != "null") {
                         searchAllRoomUserWeChatName();
-                    }else{
+                    } else {
                         console.log("不符合查找房间名的条件");
                         clearFormKeHuAdd();
                     }
                 } else {
                     console.log("不符合查找房间名的条件");
                     clearFormKeHuAdd();
+                }
+            });
+
+            // building-edit-select
+            document.querySelector("#building-edit-select").addEventListener("change", function () {
+                console.log("edit select change");
+                if (this.value != "null") {
+                    let b = document.getElementById("room-edit").value;
+                    if (b != null && b != "" && b != undefined) {
+                        searchAllRoomUserWeChatName(0, "" , "edit");
+                    } else {
+                        console.log("不符合查找房间名的条件");
+                        clearFormKeHuAdd("edit");
+                    }
+                } else {
+                    console.log("不符合查找微信名的条件");
+                    clearFormKeHuAdd("edit");
+                }
+            });
+            document.getElementById("room-edit").addEventListener("change", function () {
+                console.log("edit room change");
+                if (this.value != "" && this.value != null && this.value != undefined) {
+                    let b = document.querySelector("#building-edit-select").value;
+                    if (b != "null") {
+                        searchAllRoomUserWeChatName(0, "" , "edit");
+                    } else {
+                        console.log("不符合查找房间名的条件");
+                        clearFormKeHuAdd("edit");
+                    }
+                } else {
+                    console.log("不符合查找房间名的条件");
+                    clearFormKeHuAdd("edit");
                 }
             });
         }
@@ -1104,7 +1136,7 @@ function setDataSuccess(id) {
                 setTimeout(function () {
                     window.location.reload();
                 }, 1000)
-            }else{
+            } else {
                 top.showMessage(result.msg, 3000, 'red');
             }
         }
@@ -1113,7 +1145,7 @@ function setDataSuccess(id) {
 }
 
 // 删除当前快递的图片数据
-function deleteDataStatus(id){
+function deleteDataStatus(id) {
     let xhr = new XMLHttpRequest();
     xhr.open('POST', $HOST + '/deleteDataStatus.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -1126,9 +1158,9 @@ function deleteDataStatus(id){
                 setTimeout(function () {
                     window.location.reload();
                 }, 1000)
-            }else if(result.code == 500){
+            } else if (result.code == 500) {
                 top.showMessage(result.msg, 10000, 'red');
-            }else{
+            } else {
                 top.showMessage(result.msg, 3000, 'red');
             }
         }

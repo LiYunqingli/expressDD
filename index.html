@@ -209,17 +209,18 @@
 
     <script>
         // 当type=0的时候是监听器调用查询记录，当type!=0的时候是增加了记录后自动查询且自动选择
-        function searchAllRoomUserWeChatName(type = 0, str = "") {
-            let building_str = document.querySelector("#building-add select").value;
-            let room_str = document.querySelector("#room-add").value;
+        function searchAllRoomUserWeChatName(type = 0, str = "", operate = "add") {
+            let building_str = document.querySelector("#building-" + operate + " select").value;
+            let room_str = document.querySelector("#room-" + operate).value;
             if (building_str == "null" || room_str == null || room_str == "") {
                 top.showMessage("请选择栋和宿舍号", 3000, 'red');
                 return;
             }
-            const kehu_add_p = document.getElementById("kehu-add-p");
-            const kehu_add_loading = document.getElementById("kehu-add-loading");
-            const kehu_add_select = document.getElementById("kehu-add");
-            const kehu_add_p_err = document.getElementById("kehu-add-p-err");
+            const kehu_add_p = document.getElementById("kehu-" + operate + "-p");
+            const kehu_add_loading = document.getElementById("kehu-" + operate + "-loading");
+            const kehu_add_select = document.getElementById("kehu-" + operate);
+            const kehu_add_p_err = document.getElementById("kehu-" + operate + "-p-err");
+            console.log("kehu-" + operate + "-p-err")
 
             kehu_add_p.style.display = "none";
             kehu_add_loading.style.display = "none";
@@ -274,9 +275,9 @@
             xhr.send(`token=${getToken()}&building=${building_str}&room=${room_str}`);
         }
 
-        function addKeHu() {
-            let building_add = document.querySelector("#building-add select").value;
-            let room = document.getElementById("room-add").value;
+        function addKeHu(type = "add") {
+            let building_add = document.querySelector("#building-" + type + " select").value;
+            let room = document.getElementById("room-" + type).value;
             if (building_add == "null" || room == "") {
                 top.showMessage("请选择楼栋和输入房号", 3000, 'red');
                 return;
@@ -291,7 +292,7 @@
                         let result = JSON.parse(xhr.responseText);
                         if (result.code == 200) {
                             top.showMessage(result.msg);
-                            searchAllRoomUserWeChatName(1,kehuInput);
+                            searchAllRoomUserWeChatName(1, kehuInput, type);
                         } else {
                             top.showMessage(result.msg, 3000, 'red');
                         }
@@ -304,22 +305,22 @@
         }
 
         // 检查微信选择是否选了（增加数据不允许）
-        function checkKeHuisSelect(){
+        function checkKeHuisSelect() {
             let kehuSelect = document.getElementById("kehu-add");
-            if(kehuSelect.style.display == "none"){
+            if (kehuSelect.style.display == "none") {
                 return false;
-            }else if(kehuSelect.value == "" || kehuSelect.value == null){
+            } else if (kehuSelect.value == "" || kehuSelect.value == null) {
                 return false;
-            }else{
+            } else {
                 return true;
             }
         }
 
-        function clearFormKeHuAdd() {
-            const kehu_add_p = document.getElementById("kehu-add-p");
-            const kehu_add_loading = document.getElementById("kehu-add-loading");
-            const kehu_add_select = document.getElementById("kehu-add");
-            const kehu_add_p_err = document.getElementById("kehu-add-p-err");
+        function clearFormKeHuAdd(type = "add") {
+            const kehu_add_p = document.getElementById("kehu-" + type + "-p");
+            const kehu_add_loading = document.getElementById("kehu-" + type + "-loading");
+            const kehu_add_select = document.getElementById("kehu-" + type);
+            const kehu_add_p_err = document.getElementById("kehu-" + type + "-p-err");
 
 
             kehu_add_p.style.display = "block";
@@ -343,14 +344,41 @@
                     <label for="id-edit">编号</label>
                     <input type="text" id="id-edit" class="readonly" readonly>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="building-edit">
                     <label for="building-edit">栋</label>
-                    <select id="building-edit">
+                    <select id="building-edit-select">
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="room-edit">宿舍号</label>
                     <input type="text" id="room-edit" placeholder="例如：101">
+                </div>
+                <div class="form-group">
+                    <label for="kehu-edit">微信名<span onclick="addKeHu('edit')"
+                            style="background-color: green; color: white; border-radius: 1px; padding: 0 5px; font-size: 20px; margin-left: 5px;">+</span></label>
+                    <!-- 加载完成的下拉选择 -->
+                    <select name="kehu-edit" id="kehu-edit" style="display: none;">
+                        <option value="">请选择</option>
+                    </select>
+                    <!-- 加载动画 -->
+                    <svg id="kehu-edit-loading" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="30px"
+                        height="30px" viewBox="0 0 40 40">
+                        <path opacity="0.2" fill="#FF6700"
+                            d="M20.201,5.169c-8.254,0-14.946,6.692-14.946,14.946c0,8.255,6.692,14.946,14.946,14.946s14.946-6.691,14.946-14.946C35.146,11.861,28.455,5.169,20.201,5.169z M20.201,31.749c-6.425,0-11.634-5.208-11.634-11.634c0-6.425,5.209-11.634,11.634-11.634c6.425,0,11.633,5.209,11.633,11.634C31.834,26.541,26.626,31.749,20.201,31.749z">
+                        </path>
+                        <path fill="#FF6700"
+                            d="M26.013,10.047l1.654-2.866c-2.198-1.272-4.743-2.012-7.466-2.012h0v3.312h0C22.32,8.481,24.301,9.057,26.013,10.047z"
+                            transform="rotate(42.1171 20 20)">
+                            <animateTransform attributeType="xml" attributeName="transform" type="rotate" from="0 20 20"
+                                to="360 20 20" dur="0.5s" repeatCount="indefinite"></animateTransform>
+                        </path>
+                    </svg>
+                    <p id="kehu-edit-p" style="color: yellow;">
+                        请填写栋和宿舍号
+                    </p>
+                    <p id="kehu-edit-p-err" style="color: red; display: none;">
+                        没有关于这个宿舍的成员信息
+                    </p>
                 </div>
                 <div class="form-group">
                     <label for="pickup-code-edit">取件码</label>
