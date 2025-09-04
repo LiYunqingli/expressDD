@@ -305,8 +305,8 @@
         }
 
         // 检查微信选择是否选了（增加数据不允许）
-        function checkKeHuisSelect() {
-            let kehuSelect = document.getElementById("kehu-add");
+        function checkKeHuisSelect(type = "add") {
+            let kehuSelect = document.getElementById("kehu-" + type);
             if (kehuSelect.style.display == "none") {
                 return false;
             } else if (kehuSelect.value == "" || kehuSelect.value == null) {
