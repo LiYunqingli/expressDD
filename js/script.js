@@ -134,6 +134,7 @@ function openEditModal(id) {
     document.getElementById('pickup-time-edit').value = record.time;
 
     editModal.style.display = 'flex';
+    return record;
 }
 
 // 关闭弹窗
@@ -232,6 +233,10 @@ function addRecord() {
 
 // 更新记录
 function updateRecord() {
+    if (!checkKeHuisSelect("edit")) {
+        top.showMessage("微信名不得为空！", 3000, 'red');
+        return;
+    }
     const record = top.data.find(item => item.id === currentEditId);
     if (record) {
         record.token = getToken();
@@ -241,6 +246,7 @@ function updateRecord() {
         record.pickupCode = document.getElementById('pickup-code-edit').value;
         record.expressNumber = document.getElementById('express-number-edit').value;
         record.notes = document.getElementById('notes-edit').value;
+        record.building_users_id = document.getElementById('kehu-edit').value;
 
         console.log(record);
         let xhr = new XMLHttpRequest();
@@ -423,7 +429,7 @@ function loadBuilding() {
                 if (this.value != "null") {
                     let b = document.getElementById("room-edit").value;
                     if (b != null && b != "" && b != undefined) {
-                        searchAllRoomUserWeChatName(0, "" , "edit");
+                        searchAllRoomUserWeChatName(0, "", "edit");
                     } else {
                         console.log("不符合查找房间名的条件");
                         clearFormKeHuAdd("edit");
@@ -438,7 +444,7 @@ function loadBuilding() {
                 if (this.value != "" && this.value != null && this.value != undefined) {
                     let b = document.querySelector("#building-edit-select").value;
                     if (b != "null") {
-                        searchAllRoomUserWeChatName(0, "" , "edit");
+                        searchAllRoomUserWeChatName(0, "", "edit");
                     } else {
                         console.log("不符合查找房间名的条件");
                         clearFormKeHuAdd("edit");
@@ -718,7 +724,9 @@ function init() {
     tableBody.addEventListener('click', (e) => {
         if (e.target.closest('.edit')) {
             const id = e.target.closest('.edit').dataset.id;
-            openEditModal(id);
+            let building_users_id = openEditModal(id).building_users_id;
+            let wechatName = building_users_id.split(":")[building_users_id.split(":").length - 1].trim();
+            searchAllRoomUserWeChatName(1, wechatName, "edit");
         } else if (e.target.closest('.delete')) {
             const id = e.target.closest('.delete').dataset.id;
             deleteRecord(id);
@@ -1059,6 +1067,10 @@ function statusClick(status, id) {
         // top.showMessage("点击了未送达");
         document.getElementById("uploadImageInput").click();
     } else if (status == "待分享" || status == "已完成") {
+
+        let _building_users_id = top.data.find(item => item.id === id);
+        _building_users_id = _building_users_id.building_users_id;
+        let wechatName = _building_users_id.split(":")[_building_users_id.split(":").length - 1].trim();
         let xhr = new XMLHttpRequest();
         xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + id, true);
         xhr.onreadystatechange = function () {
@@ -1067,7 +1079,7 @@ function statusClick(status, id) {
                     let result = JSON.parse(xhr.responseText);
                     if (result.code == 200) {
                         let imgURL = $HOST + "/uploads/" + result.data[0].compressed;
-                        top.shareURL = $MAIN + "/detail/share.html?pid=" + encrypt(id);
+                        top.shareURL = wechatName + "$" + $MAIN + "/detail/share.html?pid=" + encrypt(id);
                         document.getElementById("shareImage").src = imgURL;
                         // 打开分享弹窗
                         openShareModal();

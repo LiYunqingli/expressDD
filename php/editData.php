@@ -24,6 +24,7 @@ if (!empty($data)) {
             $expressNumber = $data['expressNumber'];
             $notes = $data['notes'];
             $id = $data['id'];
+            $building_users_id = $data['building_users_id'];
             // $sql = "ALTER TABLE `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes) VALUES('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes')";
             
             $sql = "UPDATE `data` 
@@ -33,7 +34,8 @@ if (!empty($data)) {
                             room = '$room', 
                             pickupCode = '$pickupCode', 
                             expressNumber = '$expressNumber', 
-                            notes = '$notes'
+                            notes = '$notes',
+                            building_users_id = '$building_users_id'
                         WHERE id = '$id'";
 
             $result = mysqli_query($conn, $sql);
