@@ -11,7 +11,7 @@
     <script>
         //本地检查登录状态
         if (!checkLoginToken()) {
-            window.location.href = "login.html";
+            window.location.href = $HOST_HOME;
         } else {
             //服务器检查登录状态
             checkLoginTokenIsTrue();
