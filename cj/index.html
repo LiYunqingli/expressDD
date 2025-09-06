@@ -45,7 +45,7 @@
     .operate button {
         padding: 5px 10px;
         margin: 5px;
-        background-color: green;
+        background-color: #434343;
         border: none;
         color: #fff;
         border-radius: 5px;
@@ -53,16 +53,8 @@
     }
 
     .operate button:hover {
-        background-color: #0b5137;
         cursor: pointer;
-    }
-
-    .operate .red {
-        background-color: red;
-    }
-
-    .operate .red:hover {
-        background-color: #8b0000;
+        background-color: #000;
     }
 
     .no-activity {
@@ -91,13 +83,39 @@
         color: #0056b3;
     }
 
-    input {
+    table input {
         margin: 5px;
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 5px;
         font-size: 16px;
         width: 90%;
+    }
+
+    #edit {
+        /* 修改窗口 */
+        background-color: rgba(0, 0, 0, 0.5);
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #edit .edit {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        width: 400px;
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
     }
 </style>
 
@@ -129,8 +147,26 @@
             </tr> -->
         </table>
         <div class="operate">
-            <button class="red">修改</button>
-            <button>保存</button>
+            <button onclick="document.getElementById('edit').style.display='flex'">修改</button>
+            <button onclick="del()">删除这个活动</button>
+        </div>
+    </div>
+
+    <!-- 修改活动信息 -->
+    <div id="edit" style="display: none;">
+        <div class="edit">
+            <div class="form">
+                <label for="edit_title">标题</label>
+                <input type="text" id="edit_title" placeholder="请输入活动名称，例如：2元代金券抽奖活动">
+            </div>
+            <div class="form">
+                <label for="edit_num">抽奖个数</label>
+                <input type="number" id="edit_num" placeholder="请输入抽奖个数">
+            </div>
+            <div class="form">
+                <button onclick="document.getElementById('edit').style.display = 'none'">关闭</button>
+                <button onclick="sendEdit()">提交</button>
+            </div>
         </div>
     </div>
 
@@ -172,9 +208,66 @@
         今日无抽奖活动，&nbsp;<a href="javascript:create()">点击</a>&nbsp;初始化表单
     </span>
 
+    <!-- 抽奖结果 -->
+    <div id="jg">
+        还未开奖
+    </div>
 </body>
 
 <script>
+
+    function del() {
+        //弹出确认删除
+        if (confirm("确认删除吗？")) {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", $HOST + "/delActivity.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code === 200) {
+                        top.showMessage(result.msg);
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 1000);
+                    }else{
+                        top.showMessage(result.msg, 3000, 'red');
+                    }
+                }
+            };
+            xhr.send("token=" + getToken() + "&id=" + top.cjID);
+        }else{
+            top.showMessage("取消删除")
+        }
+    }
+
+    //发送编辑数据请求
+    function sendEdit() {
+        let edit_title = document.getElementById("edit_title").value;
+        let edit_num = document.getElementById("edit_num").value;
+        if (edit_title == "" || edit_num == "") {
+            top.showMessage("请填写完整信息", 3000, 'red');
+            return;
+        }
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", $HOST + "/editActivity.php", true);
+        xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                let result = JSON.parse(xhr.responseText);
+                if (result.code == 200) {
+                    top.showMessage(result.msg, 3000, 'green');
+                    loadInit();
+                    document.getElementById('edit').style.display = 'none'
+                } else {
+                    top.showMessage(result.msg, 3000, 'red');
+                }
+            }
+        };
+        xhr.send("token=" + getToken() + "&title=" + edit_title + "&num=" + edit_num + "&id=" + top.cjID);
+    }
+
     // 创建今天的抽奖活动
     function create() {
         top.showMessage("创建完成(模拟)");
@@ -212,7 +305,7 @@
                 if (result.code == 200) {
                     top.showMessage(result.msg);
                     loadInit();
-                }else{
+                } else {
                     top.showMessage(result.msg, 3000, 'red');
                 }
             }
@@ -262,6 +355,7 @@
                     document.getElementById("huodong").style.display = "block";
                     document.getElementById("no-activity").style.display = "none";
                     document.getElementById("create").style.display = "none";
+                    top.cjID = now_data.id;
                 } else if (result.code == 201) {
                     top.showMessage("今日无活动");
                 } else {
