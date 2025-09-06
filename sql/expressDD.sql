@@ -1,8 +1,9 @@
+-- phpMyAdmin SQL Dump
 -- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- 主机： 1Panel-mysql-mk1n
--- 生成日期： 2025-08-27 09:16:25
+-- 生成日期： 2025-09-06 04:32:24
 -- 服务器版本： 8.4.5
 -- PHP 版本： 8.2.29
 
@@ -61,11 +62,25 @@ INSERT INTO `building` (`id`, `print`, `input`) VALUES
 -- --------------------------------------------------------
 
 --
+-- 表的结构 `building_users`
+--
+
+CREATE TABLE `building_users` (
+  `id` int NOT NULL,
+  `building` varchar(255) NOT NULL COMMENT '栋-宿舍号',
+  `wechat_name` varchar(255) NOT NULL COMMENT '微信名字',
+  `create_at` varchar(255) NOT NULL COMMENT '谁增加的'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='记录每一个宿舍中的成员';
+
+-- --------------------------------------------------------
+
+--
 -- 表的结构 `data`
 --
 
 CREATE TABLE `data` (
   `id` int NOT NULL COMMENT '数据id',
+  `building_users_id` int NOT NULL COMMENT '微信名的id',
   `status` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '未送达' COMMENT '当前快递的状态',
   `create_at` varchar(255) NOT NULL COMMENT '谁创建的数据',
   `time` date NOT NULL COMMENT '快递是哪一天的',
@@ -76,6 +91,22 @@ CREATE TABLE `data` (
   `expressNumber` varchar(255) NOT NULL COMMENT '快递单号',
   `notes` varchar(255) NOT NULL COMMENT '备注'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='记录了快递数据';
+
+-- --------------------------------------------------------
+
+--
+-- 表的结构 `lottery`
+--
+
+CREATE TABLE `lottery` (
+  `id` int NOT NULL COMMENT '抽奖活动id',
+  `title` varchar(255) NOT NULL COMMENT '标题',
+  `time` date NOT NULL COMMENT '抽奖时间(这一天的晚上10:30)',
+  `create_by` varchar(255) NOT NULL COMMENT '谁创建的活动',
+  `create_at` datetime NOT NULL COMMENT '数据记录服务器时间',
+  `num` int NOT NULL DEFAULT '3' COMMENT '抽奖个数',
+  `y_n` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'false' COMMENT '是否完成当天抽奖'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='抽奖活动记录表';
 
 -- --------------------------------------------------------
 
@@ -110,11 +141,23 @@ CREATE TABLE `users` (
 --
 
 --
+-- 表的索引 `building_users`
+--
+ALTER TABLE `building_users`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- 表的索引 `data`
 --
 ALTER TABLE `data`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `id` (`id`);
+
+--
+-- 表的索引 `lottery`
+--
+ALTER TABLE `lottery`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- 表的索引 `users`
@@ -127,10 +170,22 @@ ALTER TABLE `users`
 --
 
 --
+-- 使用表AUTO_INCREMENT `building_users`
+--
+ALTER TABLE `building_users`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- 使用表AUTO_INCREMENT `data`
 --
 ALTER TABLE `data`
   MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT '数据id';
+
+--
+-- 使用表AUTO_INCREMENT `lottery`
+--
+ALTER TABLE `lottery`
+  MODIFY `id` int NOT NULL AUTO_INCREMENT COMMENT '抽奖活动id';
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
