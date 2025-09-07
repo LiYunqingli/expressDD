@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中奖结果查询</title>
+    <!-- 引入Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        neutral: '#64748B'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-effect {
+                transition: all 0.3s ease;
+            }
+            .card-effect:hover {
+                transform: translateY(-4px);
+            }
+            .btn-bounce {
+                transition: transform 0.2s ease;
+            }
+            .btn-bounce:active {
+                transform: scale(0.95);
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 页面标题 -->
+        <header class="text-center mb-8">
+            <h1
+                class="text-[clamp(1.5rem,4vw,2.5rem)] font-bold mb-3 bg-gradient-to-r from-primary to-purple-500 text-transparent bg-clip-text">
+                <i class="fa fa-trophy text-warning mr-2"></i>中奖结果查询
+            </h1>
+            <p class="text-neutral text-lg">查询指定日期的抽奖结果</p>
+        </header>
+
+        <!-- 日期查询区域 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <label for="queryDate" class="text-neutral font-medium">选择日期:</label>
+                    <input type="date" id="queryDate"
+                        class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
+                </div>
+                <button id="queryBtn"
+                    class="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg transition-colors btn-bounce flex items-center gap-2 w-full sm:w-auto justify-center">
+                    <i class="fa fa-search"></i>
+                    <span>查询结果</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div id="loading" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+            <p class="mt-4 text-neutral">正在加载数据...</p>
+        </div>
+
+        <!-- 无数据状态 -->
+        <div id="noData" class="hidden bg-white rounded-xl shadow-md p-8 text-center">
+            <i class="fa fa-info-circle text-4xl text-neutral/50 mb-4"></i>
+            <p class="text-neutral text-lg">没有查询到该日期的中奖记录</p>
+        </div>
+
+        <!-- 标题信息 -->
+        <div id="titleInfo" class="mb-6 hidden">
+            <h2 id="activityTitle" class="text-xl font-bold text-gray-800"></h2>
+            <p class="text-neutral">查询日期: <span id="displayDate" class="font-medium"></span></p>
+        </div>
+
+        <!-- 中奖名单 -->
+        <div id="winnersList" class="space-y-6"></div>
+    </div>
+
+    <!-- 消息提示框 -->
+    <div id="toast"
+        class="fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg transform translate-x-full opacity-0 transition-all duration-300 flex items-center gap-2 z-50">
+    </div>
+
+    <!-- 引入lib.js -->
+    <script src="../js/lib.js"></script>
+
+    <script>
+        // 接口地址
+        const API_URL = $HOST + "/getWinners.php";
+
+        // DOM元素
+        const queryDateInput = document.getElementById('queryDate');
+        const queryBtn = document.getElementById('queryBtn');
+        const loading = document.getElementById('loading');
+        const noData = document.getElementById('noData');
+        const winnersList = document.getElementById('winnersList');
+        const titleInfo = document.getElementById('titleInfo');
+        const activityTitle = document.getElementById('activityTitle');
+        const displayDate = document.getElementById('displayDate');
+        const toast = document.getElementById('toast');
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', () => {
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            queryDateInput.value = today;
+
+            // 加载今日数据
+            fetchWinners(today);
+
+            // 绑定查询按钮事件
+            queryBtn.addEventListener('click', () => {
+                const selectedDate = queryDateInput.value;
+                if (selectedDate) {
+                    fetchWinners(selectedDate);
+                } else {
+                    showMessage("请选择查询日期", false);
+                }
+            });
+
+            // 绑定日期输入框回车事件
+            queryDateInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    queryBtn.click();
+                }
+            });
+        });
+
+        // 获取中奖数据
+        function fetchWinners(date) {
+            // 显示加载状态
+            showLoading(true);
+            hideAllContent();
+
+            // 构建请求URL
+            const url = `${API_URL}?date=${encodeURIComponent(date)}`;
+
+            // 发起请求
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    showLoading(false);
+
+                    if (data.code === 200) {
+                        // 显示数据（传入活动奖品名称title）
+                        displayWinners(data.data, date, data.data.title || '奖品');
+                    } else if (data.code === 201) {
+                        // 没有数据
+                        showNoData(true);
+                        showMessage(data.msg);
+                    } else {
+                        // 其他错误
+                        showMessage(data.msg || "查询失败", false);
+                    }
+                })
+                .catch(error => {
+                    showLoading(false);
+                    console.error('获取数据失败:', error);
+                    showMessage("获取数据失败，请稍后重试", false);
+                });
+        }
+
+        // 显示中奖数据（新增activityPrize参数，接收接口返回的title）
+        function displayWinners(data, date, activityPrize) {
+            // 显示标题信息
+            titleInfo.classList.remove('hidden');
+            activityTitle.textContent = data.title || '活动中奖名单';
+            displayDate.textContent = formatDate(date);
+
+            // 清空列表
+            winnersList.innerHTML = '';
+
+            // 显示中奖者（使用统一的活动奖品名称activityPrize）
+            if (data.winners && data.winners.length > 0) {
+                data.winners.forEach((winner, index) => {
+                    // 生成您要求的标准文案：替换"2元代金券"为接口返回的title
+                    const prizeDesc = `恭喜您抽中本次活动"${activityPrize}"，七天内下单"代拿"并且微信聊天引用本消息即可使用，仅您本人使用。`;
+
+                    const winnerCard = createWinnerCard(winner, index + 1, prizeDesc, activityPrize);
+                    winnersList.appendChild(winnerCard);
+                });
+
+                // 为新添加的复制按钮绑定事件
+                bindCopyButtons();
+            } else {
+                showNoData(true);
+            }
+        }
+
+        // 创建中奖者卡片（接收动态生成的奖品描述）
+        function createWinnerCard(winner, index, prizeDesc, activityPrize) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl shadow-md p-6 card-effect fade-in';
+
+            // 复制内容也使用统一文案（与显示文案一致）
+            const copyContent = `${winner.name || '客户' + (winner.id || index)}$${prizeDesc}`;
+
+            card.innerHTML = `
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2 flex items-center">
+                            <span class="inline-block w-8 h-8 rounded-full bg-primary/10 text-primary text-center leading-8 mr-2">${index}</span>
+                            ${winner.name || '客户' + (winner.id || index)}
+                            ${winner.building ? `<span class="text-sm text-neutral ml-2">(${winner.building})</span>` : ''}
+                        </h3>
+                        <!-- 显示您要求的完整中奖文案 -->
+                        <p class="text-gray-600">${prizeDesc}</p>
+                        ${winner.time ? `<p class="text-sm text-neutral mt-1">中奖时间: ${formatDateTime(winner.time)}</p>` : ''}
+                    </div>
+                    <button class="copy-btn bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg transition-colors btn-bounce flex items-center gap-2"
+                            data-content="${escapeHtml(copyContent)}">
+                        <i class="fa fa-copy"></i>
+                        <span>复制信息</span>
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 绑定复制按钮事件
+        function bindCopyButtons() {
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.getAttribute('data-content');
+                    copyText(content);
+                });
+            });
+        }
+
+        // 复制到剪贴板（保持原功能）
+        function copyText(text) {
+            if (window.AndroidClipboard && typeof AndroidClipboard.copyText === 'function') {
+                AndroidClipboard.copyText(text);
+                showMessage("信息已复制到剪贴板");
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showMessage("信息已复制到剪贴板");
+                }).catch(() => {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        // 降级复制方法
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                showMessage(successful ? "信息已复制到剪贴板" : "复制失败，请手动复制", successful);
+            } catch (err) {
+                showMessage("复制失败，请手动复制", false);
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // 显示提示消息
+        function showMessage(text, isSuccess = true) {
+            toast.innerHTML = `
+                <i class="fa ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                <span>${text}</span>
+            `;
+
+            toast.className = `fixed top-5 right-5 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 flex items-center gap-2 z-50 ${isSuccess ? 'bg-success text-white' : 'bg-red-500 text-white'
+                }`;
+
+            toast.classList.remove('translate-x-full', 'opacity-0');
+            toast.classList.add('translate-x-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                toast.classList.add('translate-x-full', 'opacity-0');
+            }, 3000);
+        }
+
+        // 工具函数
+        function showLoading(show) {
+            loading.classList.toggle('hidden', !show);
+        }
+
+        function showNoData(show) {
+            noData.classList.toggle('hidden', !show);
+        }
+
+        function hideAllContent() {
+            titleInfo.classList.add('hidden');
+            winnersList.innerHTML = '';
+            showNoData(false);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return dateString;
+            return `${parts[1]}月${parts[2]}日`;
+        }
+
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '';
+            try {
+                const date = new Date(dateTimeString);
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateTimeString;
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+
+</html>
