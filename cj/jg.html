@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>抽奖结果公布</title>
+    <script src="../js/lib.js"></script>
+    <script src="../js/showMessage.js"></script>
+    <link rel="stylesheet" href="../css/message-box.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
@@ -179,6 +182,15 @@
                 <!-- 中奖者将通过JavaScript动态生成 -->
             </div>
 
+            <!-- 中奖者容器（修复居中适配问题） -->
+            <!-- <div class="flex justify-center mb-12">
+                <div id="winners-container"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-6xl w-full">
+
+                </div>
+            </div> -->
+
+
             <!-- 庆祝信息 -->
             <div id="celebration-message" class="mt-16 text-center">
                 <div class="inline-block bg-primary/10 rounded-3xl p-6 md:p-8 max-w-2xl">
@@ -330,30 +342,54 @@
 
         // 初始化中奖者
         function initWinners() {
-            // 创建三个中奖者
-            const winner1 = createUser('张小明', '会员编号: 87654321', '获得 智能手机一部');
-            const winner2 = createUser('李华', '会员编号: 12345678', '获得 平板电脑一台');
-            const winner3 = createUser('王芳', '会员编号: 98765432', '获得 智能手表一块');
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', $HOST + '/getWinners.php', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        const winners = result.data.winners || [];
+                        const title = result.data.title || '神秘大奖'; // 获奖内容使用title字段
 
-            // 依次显示中奖者卡片并添加动画
-            setTimeout(() => {
-                winner1.classList.add('animate-float');
-                fadeIn(winner1, 500);
-            }, 500);
+                        // 遍历中奖者数据，依次创建并显示
+                        winners.forEach((winner, index) => {
+                            // 处理building字段（确保存在且格式正确）
+                            const building = winner.building || '未知-000';
 
-            setTimeout(() => {
-                winner2.classList.add('animate-float');
-                fadeIn(winner2, 500);
-            }, 1200);
+                            // 名字使用building的第一部分（以-分割）
+                            const name = building.split('-')[0] || '未知用户';
 
-            setTimeout(() => {
-                winner3.classList.add('animate-float');
-                fadeIn(winner3, 500);
+                            // 会员编号：完整building字段，后两位替换为*
+                            const memberId = building.length > 2
+                                ? building.slice(0, -2) + '**'
+                                : building + (building.length === 1 ? '*' : '');
 
-                // 显示彩带
-                createConfetti(100);
-            }, 1900);
+                            // 获奖内容使用title字段
+                            const award = `获得 ${title}`;
+
+                            // 创建中奖者元素
+                            const winnerEl = createUser(name, `会员编号: ${memberId}`, award);
+
+                            // 按顺序添加动画（保持原时间间隔）
+                            const delay = 500 + (index * 700); // 500, 1200, 1900...
+                            setTimeout(() => {
+                                winnerEl.classList.add('animate-float');
+                                fadeIn(winnerEl, 200);
+
+                                // 最后一个中奖者显示时创建彩带
+                                if (index === winners.length - 1) {
+                                    createConfetti(100);
+                                }
+                            }, delay);
+                        });
+                    } else {
+                        top.showMessage(result.msg, 3000, 'red');
+                    }
+                }
+            };
+            xhr.send();
         }
+
 
         // 淡入动画函数
         function fadeIn(element, duration) {
@@ -498,9 +534,25 @@
         document.addEventListener('DOMContentLoaded', function () {
             // 初始化规则弹窗
             setupRulesModal();
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', $HOST + '/getCjStatus.php', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        if (result.status == 1) {
+                            setLotteryStatus(false);
+                            top.showMessage('活动未开始', 3000, 'red');
+                        } else {
+                            setLotteryStatus(true);
+                        }
+                    }
+                }
+            };
+            xhr.send();
 
             // 调用此函数控制状态：true表示已开奖，false表示未开奖
-            setLotteryStatus(false);  // 默认显示已开奖状态
+            // setLotteryStatus(false);  // 默认显示已开奖状态
         });
     </script>
 </body>
