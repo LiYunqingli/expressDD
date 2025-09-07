@@ -93,7 +93,7 @@ function parseToken($token)
 }
 
 //检查token是否合法
-function checkToken($token, $conn , $type = "1")
+function checkToken($token, $conn, $type = "1")
 {
     $user_token_data = json_decode(parseToken($token), true);
     $userid = $user_token_data['username'];
@@ -111,11 +111,41 @@ function checkToken($token, $conn , $type = "1")
         if ($result->num_rows > 0) {
             if ($type == "1") {
                 return true;
-            }else{
+            } else {
                 return $userid;
             }
         } else {
             return false;
         }
+    }
+}
+
+/**
+ * Summary of getCJdetail  判断这个快递抽奖是否中
+ * @param mixed $pid       快递id
+ * @param mixed $conn      数据库连接
+ * @return int|string      1表示中奖，0表示未中奖
+ */
+function getCJdetail($pid, $conn)
+{
+    $sql = "SELECT * FROM lottery_results WHERE pid = '$pid' AND DATE(time) = CURDATE()";
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+        return "1";
+    } else {
+        return "0";
+    }
+}
+
+
+function getTodayCJ($conn){
+    $sql = "SELECT * FROM lottery WHERE time = CURDATE() ORDER BY id DESC LIMIT 1";
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        // $row = $row[0];
+        return $row;
+    } else {
+        return "false";
     }
 }
