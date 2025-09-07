@@ -40,14 +40,19 @@ if (checkParm($key)) {
                     for ($i = 0; $i < count($data_info); $i++) {
                         $rand_all_id[] = $data_info[$i]['id'];
                     }
+                    // 修复：确保$rand始终是数组
                     $rand = array_rand($rand_all_id, $num);
-                    for ($i = 0; $i < count($rand); $i++) {
-                        $ooo[] = $rand_all_id[$rand[$i]];
+                    if (!is_array($rand)) {
+                        $rand = array($rand);
+                    }
+                    // 使用foreach更安全
+                    foreach ($rand as $r) {
+                        $ooo[] = $rand_all_id[$r];
                     }
                 }
                 $insert_ooo_sql = "INSERT INTO lottery_results (hdID, pid, time) VALUES ";
-                for ($i = 0; $i < count($ooo); $i++) {
-                    $insert_ooo_sql .= "('$hdID', '$ooo[$i]', NOW()),";
+                foreach ($ooo as $id) {
+                    $insert_ooo_sql .= "('$hdID', '$id', NOW()),";
                 }
                 $insert_ooo_sql = rtrim($insert_ooo_sql, ',');
                 $insert_ooo_res = mysqli_query($conn, $insert_ooo_sql);
@@ -60,7 +65,7 @@ if (checkParm($key)) {
                             "msg" => "抽奖成功",
                             "data" => $ooo,
                         );
-                    }else{
+                    } else {
                         $arr = array(
                             "code" => 500,
                             "msg" => "抽奖结果(修改抽奖状态)插入失败，但是数据已经插入成功",
