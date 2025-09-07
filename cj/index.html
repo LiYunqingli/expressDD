@@ -208,10 +208,13 @@
         今日无抽奖活动，&nbsp;<a href="javascript:create()">点击</a>&nbsp;初始化表单
     </span>
 
+    <p>抽奖结果&nbsp;&nbsp;<span id="jg_url"></span> </p>
+    <p><a href="./copy.html">查询中奖结果(复制)</a></p>
+    <script>
+        document.getElementById("jg_url").innerText = $MAIN + "/cj/jg.html"
+    </script>
     <!-- 抽奖结果 -->
-    <div id="jg">
-        还未开奖
-    </div>
+    <iframe src="./jg.html" width="100%" height="1000px"></iframe>
 </body>
 
 <script>
@@ -230,13 +233,13 @@
                         setTimeout(function () {
                             window.location.reload();
                         }, 1000);
-                    }else{
+                    } else {
                         top.showMessage(result.msg, 3000, 'red');
                     }
                 }
             };
             xhr.send("token=" + getToken() + "&id=" + top.cjID);
-        }else{
+        } else {
             top.showMessage("取消删除")
         }
     }
