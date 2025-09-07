@@ -73,6 +73,8 @@ if ($result) {
             if ($buildingResult && $buildingResult->num_rows > 0) {
                 $buildingRow = $buildingResult->fetch_assoc();
                 $winner['building'] = $buildingRow['building'];
+                // 将最后面两位字符改为*
+                $winner['building'] = substr($winner['building'], 0, -2) . '**';
             } else {
                 $winner['building'] = null;
             }
