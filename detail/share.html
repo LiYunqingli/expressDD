@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>快递已到，注意查收</title>
     <link rel="stylesheet" href="../css/message-box.css">
     <link rel="stylesheet" href="./css/all.min.css">
@@ -21,39 +22,52 @@
             min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
+            align-items: flex-start;
+            /* 顶部对齐，避免内容溢出 */
+            padding: 15px;
+            /* 移动端减小内边距 */
         }
 
         .container {
             max-width: 1000px;
             width: 100%;
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            /* 板块间距适配移动端 */
         }
 
+        /* 卡片基础样式（PC+移动端通用） */
         .card {
             background: white;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+            /* 移动端减小阴影强度 */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            /* 移动端弱化悬浮效果 */
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
         }
 
         .card-body {
-            padding: 30px;
+            padding: 20px;
+            /* 移动端减小内边距 */
         }
 
+        /* 图片容器样式 */
         .image-container {
             position: relative;
             border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+            /* 与其他元素间距适配 */
         }
 
         .image-container img {
@@ -64,7 +78,8 @@
         }
 
         .image-container:hover img {
-            transform: scale(1.03);
+            transform: scale(1.02);
+            /* 移动端弱化缩放效果 */
         }
 
         .image-overlay {
@@ -73,7 +88,8 @@
             left: 0;
             right: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-            padding: 20px;
+            padding: 15px;
+            /* 移动端减小内边距 */
             color: white;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -86,101 +102,280 @@
         .overlay-text {
             display: flex;
             justify-content: space-between;
+            font-size: 0.9rem;
+            /* 移动端减小字体 */
         }
 
+        .overlay-text i {
+            margin-right: 5px;
+        }
+
+        /* 图片信息卡片组（响应式网格） */
         .image-info {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            /* 移动端1列，平板2列，PC4列 */
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            /* 移动端减小间距 */
         }
 
         .info-item {
             display: flex;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
+            /* 移动端减小内边距 */
             background: #f8f9fa;
             border-radius: 10px;
+            flex-direction: row;
         }
 
         .info-item i {
-            font-size: 1.2rem;
-            margin-right: 15px;
+            font-size: 1rem;
+            /* 移动端减小图标 */
+            margin-right: 10px;
             color: #6a11cb;
+            min-width: 20px;
+            /* 固定图标宽度，避免文字跳动 */
+            text-align: center;
         }
 
         .info-content h3 {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            /* 移动端减小标题字体 */
             color: #6c757d;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .info-content p {
-            font-size: 1.1rem;
+            font-size: 0.95rem;
+            /* 移动端减小内容字体 */
             color: #343a40;
             font-weight: 500;
         }
 
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        /* 快递中奖状态通用样式（单个卡片+表格列共用） */
+        .lottery-status {
+            --status-color: #6a11cb;
+            /* 默认颜色 */
         }
 
-        .modal.show {
+        .lottery-status[data-status="1"] {
+            --status-color: #6c757d;
+        }
+
+        /* 无活动-灰色 */
+        .lottery-status[data-status="2"] {
+            --status-color: #28a745;
+        }
+
+        /* 中奖-绿色 */
+        .lottery-status[data-status="3"] {
+            --status-color: #dc3545;
+        }
+
+        /* 未中奖-红色 */
+        .lottery-status[data-status="4"] {
+            --status-color: #ffc107;
+        }
+
+        /* 等待开奖-黄色 */
+        .lottery-status i {
+            color: var(--status-color) !important;
+        }
+
+        .lottery-status .info-content p {
+            color: var(--status-color) !important;
+            font-weight: 600;
+        }
+
+        /* 其他快递状态板块样式 */
+        .other-express {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            /* 移动端减小内边距 */
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            /* 移动端减小标题字体 */
+            color: #343a40;
+            margin-bottom: 15px;
             display: flex;
-            opacity: 1;
+            align-items: center;
+            gap: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f1f3f5;
+            /* 增加分割线，提升可读性 */
         }
 
-        .modal-content {
-            max-width: 90%;
-            max-height: 90%;
-            position: relative;
+        .section-title i {
+            color: #6a11cb;
+            font-size: 1.2rem;
+            /* 图标略大于文字，突出标题 */
         }
 
-        .modal-content img {
-            max-width: 100%;
-            max-height: 80vh;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        /* 表格容器（核心适配：移动端横向滚动） */
+        .express-table-container {
+            overflow-x: auto;
+            /* 强制横向滚动 */
+            -webkit-overflow-scrolling: touch;
+            /* 移动端顺滑滚动 */
+            padding-bottom: 8px;
+            /* 滚动条预留空间 */
         }
 
-        .close-modal {
-            position: absolute;
-            top: -40px;
-            right: 0;
+        /* 表格样式（PC+移动端适配） */
+        .express-table {
+            width: 100%;
+            min-width: 400px;
+            /* 确保表格在小屏幕下有足够宽度滚动 */
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .express-table th {
+            background: #f8f9fa;
+            padding: 12px 10px;
+            /* 移动端减小内边距 */
+            text-align: left;
+            font-size: 0.85rem;
+            /* 移动端减小表头字体 */
+            color: #6c757d;
+            font-weight: 600;
+            white-space: nowrap;
+            /* 表头文字不换行 */
+        }
+
+        .express-table td {
+            padding: 12px 10px;
+            /* 移动端减小内边距 */
+            border-top: 1px solid #f1f3f5;
+            font-size: 0.85rem;
+            /* 移动端减小表格内容字体 */
+            color: #343a40;
+            vertical-align: middle;
+            /* 内容垂直居中 */
+        }
+
+        /* 快递状态标签样式 */
+        .status-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            /* 移动端减小标签内边距 */
+            border-radius: 20px;
+            font-size: 0.75rem;
+            /* 移动端减小标签字体 */
+            font-weight: 500;
+        }
+
+        .status-tag.unreceived {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        /* 未送达 */
+        .status-tag.wait-notify {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* 已送达-等待通知 */
+        .status-tag.notified {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* 已送达-已通知 */
+
+        /* 表格中中奖状态标签样式 */
+        .lottery-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            /* 移动端减小图标与文字间距 */
+            padding: 3px 8px;
+            /* 移动端减小标签内边距 */
+            border-radius: 20px;
+            font-size: 0.75rem;
+            /* 移动端减小标签字体 */
+            font-weight: 500;
+            color: white !important;
+            white-space: nowrap;
+            /* 标签内容不换行 */
+        }
+
+        .lottery-tag[data-status="1"] {
+            background: #6c757d;
+        }
+
+        /* 无活动-灰色 */
+        .lottery-tag[data-status="2"] {
+            background: #28a745;
+        }
+
+        /* 中奖-绿色 */
+        .lottery-tag[data-status="3"] {
+            background: #dc3545;
+        }
+
+        /* 未中奖-红色 */
+        .lottery-tag[data-status="4"] {
+            background: #ffc107;
+            color: #343a40 !important;
+        }
+
+        /* 等待开奖-黄色（深色文字） */
+        .lottery-tag i {
+            font-size: 0.8rem;
+            /* 移动端减小图标 */
+        }
+
+        /* 查看按钮样式（适配移动端触摸） */
+        .view-btn {
+            padding: 5px 10px;
+            /* 移动端调整按钮大小 */
+            background: #6a11cb;
             color: white;
-            font-size: 2.5rem;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: background 0.3s ease;
+            font-size: 0.8rem;
+            /* 移动端减小按钮字体 */
+            min-width: 60px;
+            /* 固定按钮最小宽度，避免变形 */
+            text-align: center;
         }
 
-        .close-modal:hover {
-            color: #2575fc;
+        .view-btn:hover {
+            background: #5a0ecb;
         }
 
-        /* Loading animation */
+        .view-btn:active {
+            background: #4a0dbc;
+            /* 移动端增加按压反馈 */
+        }
+
+        /* 加载动画样式（适配不同屏幕） */
         .loader {
             display: flex;
             justify-content: center;
-            margin: 40px 0;
+            margin: 30px 0;
+            /* 移动端减小边距 */
         }
 
         .loader-circle {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #6a11cb;
+            width: 40px;
+            /* 移动端减小加载动画 */
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6a11cb;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -195,20 +390,147 @@
             }
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .card-body {
+        /* 模态框样式（全屏适配） */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            /* 确保模态框在最上层 */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 15px;
+            /* 移动端预留边距 */
+        }
+
+        .modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            max-width: 100%;
+            max-height: 90vh;
+            /* 模态框最大高度，避免超出屏幕 */
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            /* 图片最大高度，适配移动端 */
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            color: white;
+            font-size: 1.8rem;
+            /* 移动端调整关闭按钮大小 */
+            cursor: pointer;
+            transition: color 0.3s ease;
+            z-index: 10;
+        }
+
+        .close-modal:hover {
+            color: #2575fc;
+        }
+
+        /* 媒体查询：精细化适配（平板+大屏手机） */
+        @media (min-width: 768px) {
+            body {
                 padding: 20px;
             }
 
+            .container {
+                gap: 25px;
+            }
+
+            .card-body,
+            .other-express {
+                padding: 25px;
+            }
+
+            .image-info {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
             .info-item {
-                padding: 12px;
+                padding: 15px;
+            }
+
+            .info-item i {
+                font-size: 1.2rem;
+                margin-right: 15px;
+            }
+
+            .info-content h3 {
+                font-size: 0.9rem;
+            }
+
+            .info-content p {
+                font-size: 1.1rem;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+                margin-bottom: 20px;
+                gap: 10px;
+            }
+
+            .express-table th,
+            .express-table td {
+                padding: 15px;
+                font-size: 0.95rem;
+            }
+
+            .status-tag,
+            .lottery-tag {
+                padding: 4px 10px;
+                font-size: 0.85rem;
+            }
+
+            .view-btn {
+                padding: 6px 12px;
+                font-size: 0.9rem;
+                min-width: 70px;
+            }
+
+            .loader-circle {
+                width: 50px;
+                height: 50px;
+            }
+
+            .close-modal {
+                font-size: 2.5rem;
+                top: -40px;
             }
         }
 
-        @media (max-width: 480px) {
-            .image-info {
-                grid-template-columns: 1fr;
+        /* 媒体查询：PC端优化 */
+        @media (min-width: 1024px) {
+            .card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            }
+
+            .image-container:hover img {
+                transform: scale(1.03);
+            }
+
+            .express-table {
+                min-width: 800px;
+                /* PC端表格最小宽度，避免过宽 */
             }
         }
     </style>
@@ -216,26 +538,36 @@
 
 <body>
     <div class="container">
+        <!-- 原有卡片（包含图片、上传信息、中奖状态） -->
         <div class="card">
             <div class="card-body">
                 <div class="loader">
                     <div class="loader-circle"></div>
                 </div>
 
-                <!-- 图片信息区域 -->
+                <!-- 图片信息区域：包含快递中奖状态卡片 -->
                 <div class="image-info" style="display: none;">
                     <div class="info-item">
                         <i class="fas fa-user"></i>
                         <div class="info-content">
-                            <h3>上传者</h3>
+                            <h3>配送员</h3>
                             <p id="uploader">admin</p>
+                        </div>
+                    </div>
+
+                    <!-- 快递中奖状态卡片 -->
+                    <div class="info-item lottery-status" data-status="2">
+                        <i class="fas fa-gift"></i>
+                        <div class="info-content">
+                            <h3>快递中奖状态</h3>
+                            <p id="lottery-status">中奖</p>
                         </div>
                     </div>
 
                     <div class="info-item">
                         <i class="fas fa-calendar"></i>
                         <div class="info-content">
-                            <h3>上传时间</h3>
+                            <h3>送达时间</h3>
                             <p id="upload-time">2025-08-25 17:36:37</p>
                         </div>
                     </div>
@@ -261,9 +593,62 @@
                 </div>
             </div>
         </div>
+
+        <!-- 其他快递送达状态板块（含中奖状态列） -->
+        <div class="other-express">
+            <h2 class="section-title">
+                <i class="fas fa-box-open"></i> 其他快递送达状态
+            </h2>
+            <!-- 表格容器（核心适配：移动端横向滚动） -->
+            <div class="express-table-container">
+                <table class="express-table">
+                    <thead>
+                        <tr>
+                            <th>快递编号</th>
+                            <th>当前状态</th>
+                            <th>中奖状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="express-list">
+                        <!-- 示例数据行（后期通过API动态渲染） -->
+                        <tr>
+                            <td colspan="4" style="text-align: center;">
+                                今天您没有其他快递
+                            </td>
+                        </tr>
+                        <!-- <tr>
+                            <td>YT20250825001</td>
+                            <td><span class="status-tag unreceived">未送达</span></td>
+                            <td><span class="lottery-tag" data-status="2"><i class="fas fa-gift"></i> 中奖</span></td>
+                            <td><button class="view-btn" onclick="viewExpressDetail('YT20250825001')">查看详情</button></td>
+                        </tr>
+                        <tr>
+                            <td>SF13820250825</td>
+                            <td><span class="status-tag wait-notify">已送达-等待通知</span></td>
+                            <td><span class="lottery-tag" data-status="3"><i class="fas fa-times"></i> 未中奖</span></td>
+                            <td><button class="view-btn" onclick="viewExpressDetail('SF13820250825')">查看详情</button></td>
+                        </tr>
+                        <tr>
+                            <td>ZT88820250825</td>
+                            <td><span class="status-tag notified">已送达-已通知</span></td>
+                            <td><span class="lottery-tag" data-status="4"><i class="fas fa-clock"></i> 等待开奖</span></td>
+                            <td><button class="view-btn" onclick="viewExpressDetail('ZT88820250825')">查看详情</button></td>
+                        </tr>
+                        <tr>
+                            <td>YD66620250825</td>
+                            <td><span class="status-tag unreceived">未送达</span></td>
+                            <td><span class="lottery-tag" data-status="1"><i class="fas fa-info"></i> 今日没有抽奖活动</span>
+                            </td>
+                            <td><button class="view-btn" onclick="viewExpressDetail('YD66620250825')">查看详情</button></td>
+                        </tr> -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <!-- Modal for enlarged image -->
+    <!-- 图片放大模态框 -->
     <div class="modal" id="imageModal">
         <div class="modal-content">
             <span class="close-modal" id="closeModal">&times;</span>
@@ -274,6 +659,7 @@
     <script src="../js/lib.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // 元素获取
             const loader = document.querySelector('.loader');
             const imageContainer = document.querySelector('.image-container');
             const imageInfo = document.querySelector('.image-info');
@@ -281,7 +667,10 @@
             const modal = document.getElementById('imageModal');
             const modalImage = document.getElementById('modalImage');
             const closeModal = document.getElementById('closeModal');
+            const lotteryStatusEl = document.getElementById('lottery-status');
+            const lotteryStatusCard = document.querySelector('.lottery-status');
 
+            // 解析URL参数，加载图片详情
             let pid = getUrlParam('pid');
             if (pid) {
                 pid = decrypt(pid);
@@ -292,32 +681,39 @@
                 let xhr = new XMLHttpRequest();
                 xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + pid, true);
                 xhr.onreadystatechange = function () {
-                    if (xhr.readyState == 4) {
-                        if (xhr.status == 200) {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
                             let result = JSON.parse(xhr.responseText);
-                            if (result.code == 200) {
-                                console.log(result.data);
+                            if (result.code === 200) {
                                 let imgData = result.data[0];
                                 let imgURL = $HOST + "/uploads/" + imgData.compressed;
+                                // let cj = imgData.cj;
+                                // 设置当前快递中奖状态（对接API时替换模拟值）
+                                const lotteryStatus = imgData.cj; // 1=无活动,2=中奖,3=未中奖,4=等待开奖
+                                const statusTextMap = {
+                                    1: "今日没有抽奖活动",
+                                    2: "中奖",
+                                    3: "未中奖",
+                                    4: "等待开奖"
+                                };
+                                lotteryStatusEl.textContent = statusTextMap[lotteryStatus];
+                                lotteryStatusCard.setAttribute('data-status', lotteryStatus);
 
-                                // Hide loader and show content
+                                // 隐藏加载动画，显示内容
                                 loader.style.display = 'none';
                                 imageInfo.style.display = 'grid';
                                 imageContainer.style.display = 'block';
 
-                                // Set image source
+                                // 加载图片并更新尺寸
                                 imgElement.src = imgURL;
                                 imgElement.onload = function () {
-                                    // Update image dimensions
                                     document.getElementById('image-dimensions').textContent =
                                         this.naturalWidth + ' × ' + this.naturalHeight;
-
-                                    // Update other info
                                     document.getElementById('uploader').textContent = imgData.userid;
                                     document.getElementById('upload-time').textContent = imgData.upload_time;
                                 };
 
-                                // Set up modal image
+                                // 设置模态框图片
                                 modalImage.src = imgURL;
 
                             } else {
@@ -333,32 +729,143 @@
                 top.showMessage('分享链接已失效', 1000000, 'red');
             }
 
-            // Set up modal functionality
+            // 模态框操作（适配移动端触摸）
             imageContainer.addEventListener('click', function () {
                 modal.classList.add('show');
-                document.body.style.overflow = 'hidden'; // Prevent scrolling
+                document.body.style.overflow = 'hidden';
+                // 移动端禁止缩放
+                document.documentElement.style.touchAction = 'none';
             });
 
-            closeModal.addEventListener('click', function () {
-                modal.classList.remove('show');
-                document.body.style.overflow = ''; // Re-enable scrolling
-            });
-
+            closeModal.addEventListener('click', closeModalHandler);
             modal.addEventListener('click', function (e) {
                 if (e.target === modal) {
-                    modal.classList.remove('show');
-                    document.body.style.overflow = '';
+                    closeModalHandler();
                 }
             });
 
-            // Add keyboard support for closing modal
+            // 键盘ESC关闭模态框（PC端）
             document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape' && modal.classList.contains('show')) {
-                    modal.classList.remove('show');
-                    document.body.style.overflow = '';
+                    closeModalHandler();
                 }
             });
+
+            // 关闭模态框通用函数
+            function closeModalHandler() {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+                // 恢复移动端触摸行为
+                document.documentElement.style.touchAction = '';
+            }
+
+            // 加载其他快递状态（含中奖状态）
+            loadOtherExpressStatus(pid);
         });
+
+        /**
+         * 加载其他快递状态（含中奖状态，后期对接API）
+         */
+        function loadOtherExpressStatus(pid) {
+            const expressListEl = document.getElementById('express-list');
+            // 1. 真实场景下替换为API请求（示例接口地址）
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", $HOST + "/getCjData.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let expressData = JSON.parse(xhr.responseText);
+                    if (expressData.code == 200) {
+                        top.showMessage(expressData.msg);
+                        expressData = expressData.data;
+                        renderExpressTable(expressData, expressListEl); // 渲染表格
+                    } else if (expressData.code == 201) {
+                        top.showMessage(expressData.msg);
+                    } else {
+                        top.showMessage(expressData.msg, 3000, 'red');
+                    }
+                }
+            };
+            xhr.send("pid=" + pid);
+
+            // 2. 模拟API返回数据（包含快递状态+中奖状态）
+            // const mockExpressData = [
+            //     {
+            //         expressNo: "YT20250825001",
+            //         deliveryStatus: 0, // 0=未送达,1=已送达-等待通知,2=已送达-已通知
+            //         lotteryStatus: 2   // 1=无活动,2=中奖,3=未中奖,4=等待开奖
+            //     },
+            //     { expressNo: "SF13820250825", deliveryStatus: 1, lotteryStatus: 3 },
+            //     { expressNo: "ZT88820250825", deliveryStatus: 2, lotteryStatus: 4 },
+            //     { expressNo: "YD66620250825", deliveryStatus: 0, lotteryStatus: 1 }
+            // ];
+            // 3. 渲染表格（真实场景用接口返回的expressData）
+            // renderExpressTable(mockExpressData, expressListEl);
+        }
+
+        /**
+         * 渲染其他快递状态表格（含中奖状态列）
+         * @param {Array} data - 快递数据数组（含配送状态+中奖状态）
+         * @param {HTMLElement} container - 表格容器
+         */
+        function renderExpressTable(data, container) {
+            container.innerHTML = ''; // 清空原有内容
+            // 1. 配送状态映射（与CSS类对应）
+            const deliveryStatusMap = [
+                { text: "未送达", class: "unreceived" },
+                { text: "已送达-等待通知", class: "wait-notify" },
+                { text: "已送达-已通知", class: "notified" }
+            ];
+            // 2. 中奖状态映射（文本+图标+CSS类）
+            const lotteryStatusMap = [
+                { text: "今日没有抽奖活动", icon: "info", status: 1 },
+                { text: "中奖", icon: "gift", status: 2 },
+                { text: "未中奖", icon: "times", status: 3 },
+                { text: "等待开奖", icon: "clock", status: 4 }
+            ];
+
+            // 3. 循环生成表格行
+            data.forEach(item => {
+                // 获取配送状态（默认未送达）
+                const deliveryStatus = deliveryStatusMap[item.deliveryStatus] || deliveryStatusMap[0];
+                // 获取中奖状态（默认无活动）
+                const lotteryStatus = lotteryStatusMap.find(s => s.status === item.lotteryStatus) || lotteryStatusMap[0];
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.expressNo}</td>
+                    <td><span class="status-tag ${deliveryStatus.class}">${deliveryStatus.text}</span></td>
+                    <td>
+                        <span class="lottery-tag" data-status="${lotteryStatus.status}">
+                            <i class="fas fa-${lotteryStatus.icon}"></i> ${lotteryStatus.text}
+                        </span>
+                    </td>
+                    <td><button class="view-btn" onclick="viewExpressDetail('${item.expressNo}')">查看详情</button></td>
+                `;
+                container.appendChild(tr);
+            });
+        }
+
+        /**
+         * 查看快递详情（适配移动端触摸反馈）
+         * @param {string} expressNo - 快递编号
+         */
+        function viewExpressDetail(expressNo) {
+            // 真实场景：请求该快递的详情接口（含配送轨迹、中奖详情等）
+            // alert(`查看快递 ${expressNo} 的详情（可在此处扩展显示中奖规则、领奖方式等）`);
+            top.showMessage("暂不支持查看快递详情", 5000, 'red');
+            // 示例：打开详情模态框（移动端建议用底部弹窗，而非全屏模态框）
+            // openExpressDetailModal(expressNo);
+        }
+
+        /**
+         * （可选）打开快递详情模态框（移动端建议用底部弹窗样式）
+         * @param {string} expressNo - 快递编号
+         */
+        function openExpressDetailModal(expressNo) {
+            // 移动端优化：使用底部滑出弹窗，而非全屏模态框
+            // 此处可添加底部弹窗的创建和渲染逻辑
+        }
     </script>
     <script src="../js/showMessage.js"></script>
 </body>
