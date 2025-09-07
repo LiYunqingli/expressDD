@@ -1079,7 +1079,7 @@ function statusClick(status, id) {
                     let result = JSON.parse(xhr.responseText);
                     if (result.code == 200) {
                         let imgURL = $HOST + "/uploads/" + result.data[0].compressed;
-                        top.shareURL = wechatName + "$" + $MAIN + "/detail/share.html?pid=" + encrypt(id);
+                        top.shareURL = $MAIN + "/detail/share.html?pid=" + encrypt(id);
                         document.getElementById("shareImage").src = imgURL;
                         // 打开分享弹窗
                         openShareModal();
@@ -1093,9 +1093,10 @@ function statusClick(status, id) {
 
                             // 复制逻辑（复用已有的复制函数）
                             if (window.AndroidClipboard && typeof AndroidClipboard.copyText === 'function') {
-                                AndroidClipboard.copyText(shareURL);
+                                AndroidClipboard.copyText(wechatName + "$" + shareURL);
                                 top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
                             } else if (navigator.clipboard) {
+                                
                                 navigator.clipboard.writeText(shareURL).then(function () {
                                     top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
                                 }).catch(function () {
