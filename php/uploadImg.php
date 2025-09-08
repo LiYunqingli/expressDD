@@ -18,30 +18,47 @@ if (!checkParm($token)) {
     if (($userid = checkToken($token, $conn, '2')) != false) {
         try {
             // 1. 检查是否有文件上传
-            if (!isset($_FILES['originalImage']) || !isset($_FILES['compressedImage'])) {
+
+            // 有原图版本
+            // if (!isset($_FILES['originalImage']) || !isset($_FILES['compressedImage'])) {
+            //     throw new Exception('未接收到文件');
+            // }
+
+            if (!isset($_FILES['compressedImage'])) {
                 throw new Exception('未接收到文件');
             }
 
-            $originalFile = $_FILES['originalImage'];
+            // $originalFile = $_FILES['originalImage']; //去掉原图
             $compressedFile = $_FILES['compressedImage'];
 
             // 2. 验证上传是否成功
-            if ($originalFile['error'] !== UPLOAD_ERR_OK) {
-                throw new Exception('原图上传错误: ' . getUploadErrorMsg($originalFile['error']));
-            }
+            // if ($originalFile['error'] !== UPLOAD_ERR_OK) {
+            //     throw new Exception('原图上传错误: ' . getUploadErrorMsg($originalFile['error']));
+            // }
             if ($compressedFile['error'] !== UPLOAD_ERR_OK) {
                 throw new Exception('压缩图上传错误: ' . getUploadErrorMsg($compressedFile['error']));
             }
 
             // 3. 验证文件类型
             $allowTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!in_array($originalFile['type'], $allowTypes) || !in_array($compressedFile['type'], $allowTypes)) {
+
+            // 有原图版本
+            // if (!in_array($originalFile['type'], $allowTypes) || !in_array($compressedFile['type'], $allowTypes)) {
+            //     throw new Exception('仅支持JPG、PNG、GIF格式图片');
+            // }
+
+            if (!in_array($compressedFile['type'], $allowTypes)) {
                 throw new Exception('仅支持JPG、PNG、GIF格式图片');
             }
 
             // 4. 验证文件大小
             $maxSize = 10 * 1024 * 1024; // 10MB
-            if ($originalFile['size'] > $maxSize || $compressedFile['size'] > $maxSize) {
+            // 有原图版本
+            // if ($originalFile['size'] > $maxSize || $compressedFile['size'] > $maxSize) {
+            //     throw new Exception('图片大小不能超过10MB');
+            // }
+
+            if ($compressedFile['size'] > $maxSize) {
                 throw new Exception('图片大小不能超过10MB');
             }
 
@@ -52,18 +69,22 @@ if (!checkParm($token)) {
             }
 
             // 6. 生成唯一文件名
-            $originalExt = pathinfo($originalFile['name'], PATHINFO_EXTENSION);
+            // $originalExt = pathinfo($originalFile['name'], PATHINFO_EXTENSION);
             $compressedExt = pathinfo($compressedFile['name'], PATHINFO_EXTENSION);
-            $originalName = uniqid() . '_original.' . $originalExt;
+            // $originalName = uniqid() . '_original.' . $originalExt;
             $compressedName = uniqid() . '_compressed.' . $compressedExt;
 
             // 7. 移动临时文件到目标目录
-            $originalDest = $uploadDir . $originalName;
+            // $originalDest = $uploadDir . $originalName;
             $compressedDest = $uploadDir . $compressedName;
-            if (
-                move_uploaded_file($originalFile['tmp_name'], $originalDest) &&
-                move_uploaded_file($compressedFile['tmp_name'], $compressedDest)
-            ) {
+
+            //有原图版本
+            // if (
+            //     move_uploaded_file($originalFile['tmp_name'], $originalDest) &&
+            //     move_uploaded_file($compressedFile['tmp_name'], $compressedDest)
+            // )
+
+            if (move_uploaded_file($compressedFile['tmp_name'], $compressedDest)) {
                 // 获取原始记录的信息
                 $sql = "SELECT * FROM `data` WHERE `id` = '$pid'";
                 $result = $conn->query($sql);
@@ -87,7 +108,9 @@ if (!checkParm($token)) {
                     // 插入多条图片记录
                     $sql_old = "INSERT INTO upload_img(pid, original, compressed, userid, upload_time, backup_y_n) VALUES";
                     foreach ($ids as $id) {
-                        $sql_old .= "('$id', '$originalName','$compressedName', '$userid', NOW(), 'false'),";
+                        // 有原图版本
+                        // $sql_old .= "('$id', '$originalName','$compressedName', '$userid', NOW(), 'false'),";
+                        $sql_old .= "('$id', '','$compressedName', '$userid', NOW(), 'false'),";
                     }
                     $sqlInsert = rtrim($sql_old, ',');
                     $insertResult = $conn->query($sqlInsert);
@@ -103,9 +126,9 @@ if (!checkParm($token)) {
                             $response['message'] = '文件上传成功，' . count($ids) . '条记录状态已更新';
                             $response['updated_ids'] = $ids;
                             $response['files'] = [
-                                'original' => $originalName,
+                                // 'original' => $originalName,
                                 'compressed' => $compressedName,
-                                'originalUrl' => $uploadDir . $originalName,
+                                // 'originalUrl' => $uploadDir . $originalName,
                                 'compressedUrl' => $uploadDir . $compressedName
                             ];
                         } else {
@@ -119,7 +142,10 @@ if (!checkParm($token)) {
                     }
                 } else {
                     // 只插入一条图片记录
-                    $sqlInsert = "INSERT INTO upload_img(pid, original, compressed, userid, upload_time, backup_y_n) VALUES('$pid', '$originalName','$compressedName', '$userid', NOW(), 'false')";
+
+                    //有原图版本
+                    // $sqlInsert = "INSERT INTO upload_img(pid, original, compressed, userid, upload_time, backup_y_n) VALUES('$pid', '$originalName','$compressedName', '$userid', NOW(), 'false')";
+                    $sqlInsert = "INSERT INTO upload_img(pid, original, compressed, userid, upload_time, backup_y_n) VALUES('$pid', '','$compressedName', '$userid', NOW(), 'false')";
                     $insertResult = $conn->query($sqlInsert);
 
                     // 只更新一条记录的状态
@@ -132,9 +158,9 @@ if (!checkParm($token)) {
                             $response['message'] = '文件上传成功，状态已更新';
                             $response['updated_ids'] = [$pid];
                             $response['files'] = [
-                                'original' => $originalName,
+                                // 'original' => $originalName,
                                 'compressed' => $compressedName,
-                                'originalUrl' => $uploadDir . $originalName,
+                                // 'originalUrl' => $uploadDir . $originalName,
                                 'compressedUrl' => $uploadDir . $compressedName
                             ];
                         } else {
@@ -143,7 +169,7 @@ if (!checkParm($token)) {
                     } else {
                         $response['message'] = '数据库插入失败: ' . $conn->error;
                         // 删除已上传的文件
-                        unlink($uploadDir . $originalName);
+                        // unlink($uploadDir . $originalName);
                         unlink($uploadDir . $compressedName);
                     }
                 }

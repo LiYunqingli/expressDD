@@ -785,7 +785,7 @@ function init() {
 
                         // 创建FormData并添加两个图片
                         const formData = new FormData();
-                        formData.append('originalImage', file); // 原图
+                        // formData.append('originalImage', file); // 原图
                         formData.append('compressedImage', compressedBlob, 'compressed_' + file.name); // 压缩图
 
                         // 发送到服务器
