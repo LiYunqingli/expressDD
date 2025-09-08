@@ -8,7 +8,7 @@ include 'db.php';
 include 'lib.php';
 
 if (checkParm($key)) {
-    if ($key == "Aa123456Aa123456") {
+    if ($key == "Aa123456") {
         $sql = "SELECT * FROM lottery WHERE `time` = CURDATE() AND y_n = 'false' ORDER BY `id` DESC";
         //将数据拿出来 $conn
         $res = $conn->query($sql);
