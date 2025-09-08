@@ -1168,9 +1168,7 @@ function deleteDataStatus(id) {
             if (result.code === 200) {
                 top.showMessage(result.msg);
                 closeShareModal()
-                setTimeout(function () {
-                    window.location.reload();
-                }, 1000)
+                getData();
             } else if (result.code == 500) {
                 top.showMessage(result.msg, 10000, 'red');
             } else {
