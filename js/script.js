@@ -629,8 +629,8 @@ function getData() {
             if (result.code === 200) {
                 top.data = result.data;
                 console.log("数据更新：" + result.data);
-                renderTable(top.data);
-                // document.querySelector('.active').click()
+                // renderTable(top.data);
+                document.querySelector('.active').click()
             } else {
                 top.showMessage(result.msg, 3000, "red");
                 top.data = result.data;
@@ -817,7 +817,9 @@ function init() {
                                                 top.data[i].status = "待分享";
                                             }
                                         }
-                                        window.location.reload();
+                                        // window.location.reload();
+                                        // $$$
+                                        getData();
                                     } else {
                                         top.showMessage('上传失败: ' + response.message, 3000, 'red');
                                     }
@@ -1146,9 +1148,7 @@ function setDataSuccess(id) {
             if (result.code === 200) {
                 top.showMessage(result.msg);
                 closeShareModal()
-                setTimeout(function () {
-                    window.location.reload();
-                }, 1000)
+                getData();
             } else {
                 top.showMessage(result.msg, 3000, 'red');
             }
