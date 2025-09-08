@@ -214,7 +214,7 @@
         document.getElementById("jg_url").innerText = $MAIN + "/cj/jg.html"
     </script>
     <!-- 抽奖结果 -->
-    <iframe src="./jg.html" width="100%" height="1000px"></iframe>
+    <iframe src="./jg-iframe.html" width="100%" height="1000px"></iframe>
 </body>
 
 <script>
@@ -316,6 +316,30 @@
         xhr.send("title=" + title + "&date=" + date + "&num=" + num + "&token=" + getToken());
     }
 
+    // 立即发起抽奖
+    function cj() {
+        //要求输入密码
+        let password = prompt("请输入抽奖密码");
+        if (password == null || password == "") {
+            return;
+        }
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", $HOST + "/cjMain.php?key=" + password, true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                let result = JSON.parse(xhr.responseText);
+                if (result.code == 200) {
+                    top.showMessage(result.msg);
+                    loadInit();
+                    document.querySelector("iframe").contentWindow.location.reload();
+                } else {
+                    top.showMessage(result.msg, 3000, 'red');
+                }
+            }
+        };
+        xhr.send();
+    }
+
     // 加载今天的活动
     function loadInit() {
 
@@ -351,7 +375,7 @@
                         </tr>
                         <tr>
                             <td>是否完成抽奖</td>
-                            <td>${now_data.y_n}</td>
+                            <td>${now_data.y_n} ${now_data.y_n == "false" ? "<button onclick='cj()'>立即抽奖</button>" : ""}</td>
                         </tr>
                     `;
                     document.getElementById("insert").innerHTML = shuchu;

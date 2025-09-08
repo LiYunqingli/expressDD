@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽奖结果公布</title>
+    <script src="../js/lib.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 配置Tailwind自定义颜色和字体 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#D81F26', // 中国红
+                        secondary: '#FFD700', // 金色
+                        accent: '#FF6B6B', // 亮红色
+                        dark: '#9E2A2B', // 深红色
+                    },
+                    fontFamily: {
+                        festive: ['"Ma Shan Zheng"', 'cursive'],
+                        sans: ['"Noto Sans SC"', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- 引入中文字体 -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@400;500;700&display=swap"
+        rel="stylesheet">
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .text-shadow-gold {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #FFD700, 0 0 20px #FFD700;
+            }
+            .animate-float {
+                animation: float 3s ease-in-out infinite;
+            }
+            .animate-pulse-slow {
+                animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            }
+            .confetti {
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                background-color: #f2d74e;
+                opacity: 0;
+            }
+            .modal-backdrop {
+                backdrop-filter: blur(3px);
+            }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .bg-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffd700' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+
+<body class="bg-red-50 bg-pattern min-h-screen font-sans">
+    <!-- 顶部装饰 -->
+    <div class="hidden md:block h-16 bg-gradient-to-r from-primary via-accent to-primary"></div>
+
+    <!-- 主容器 -->
+    <div class="container mx-auto px-4 py-8 relative">
+        <!-- 标题区域 -->
+        <header class="text-center mb-12 md:mb-20 relative">
+            <h1
+                class="font-festive text-[clamp(2.5rem,8vw,5rem)] text-primary text-shadow-gold mb-4 animate-pulse-slow">
+                抽奖结果公布
+            </h1>
+            <p class="text-gray-700 text-[clamp(1rem,3vw,1.25rem)] max-w-2xl mx-auto" id="status-description">
+                恭喜以下幸运儿获得本次活动奖品！
+            </p>
+
+            <!-- 烟花SVG装饰 -->
+            <div class="absolute -top-10 -left-10 hidden md:block w-32 h-32">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g class="firework" fill="none" stroke="#FFD700" stroke-width="1">
+                        <path d="M50 50 L30 20" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L70 30" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L80 50" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3.5s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L70 70" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="4.5s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L30 70" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="5s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L20 50" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L35 35" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3.2s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L65 65" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3.8s" repeatCount="indefinite" />
+                        </path>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="absolute -top-10 -right-10 hidden md:block w-32 h-32">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g class="firework" fill="none" stroke="#D81F26" stroke-width="1">
+                        <path d="M50 50 L30 20" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3.5s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L70 30" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L80 50" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="5s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L70 70" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L30 70" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="4.5s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L20 50" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3.8s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L35 35" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="4.2s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M50 50 L65 65" opacity="0.7">
+                            <animate attributeName="opacity" values="0;1;0" dur="3.3s" repeatCount="indefinite" />
+                        </path>
+                    </g>
+                </svg>
+            </div>
+        </header>
+
+        <!-- 中奖者展示区 -->
+        <main class="max-w-4xl mx-auto">
+            <!-- 未开奖状态显示区域 -->
+            <div id="not-drawn-container" class="hidden text-center mb-16">
+                <div class="inline-block bg-white rounded-2xl shadow-xl p-8 md:p-10 border-4 border-secondary">
+                    <div class="mb-6 text-6xl text-secondary animate-pulse">
+                        <i class="fa fa-clock-o"></i>
+                    </div>
+                    <h2 class="font-festive text-[clamp(1.5rem,4vw,2.5rem)] text-primary mb-4">
+                        抽奖尚未开始
+                    </h2>
+                    <p class="text-gray-700 max-w-md mx-auto">
+                        感谢您的关注！抽奖活动将在指定时间进行，敬请期待开奖结果公布。
+                    </p>
+                    <div class="mt-8">
+                        <button id="show-rules-btn"
+                            class="bg-primary hover:bg-dark text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            了解活动规则
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中奖者容器 -->
+            <div id="winners-container" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- 中奖者将通过JavaScript动态生成 -->
+            </div>
+
+            <!-- 中奖者容器（修复居中适配问题） -->
+            <!-- <div class="flex justify-center mb-12">
+                <div id="winners-container"
+                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-6xl w-full">
+
+                </div>
+            </div> -->
+
+
+            <!-- 庆祝信息 -->
+            <div id="celebration-message" class="mt-16 text-center">
+                <div class="inline-block bg-primary/10 rounded-3xl p-6 md:p-8 max-w-2xl">
+                    <h2 class="font-festive text-[clamp(1.5rem,5vw,2.5rem)] text-primary mb-4">
+                        恭喜所有中奖的幸运儿！
+                    </h2>
+                    <p class="text-gray-700 mb-6">
+                        请中奖者在7个工作日使用您的奖品，感谢大家的参与！
+                    </p>
+                    <button id="show-rules-btn-2"
+                        class="bg-secondary hover:bg-yellow-500 text-gray-800 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        了解更多活动详情
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 底部装饰 -->
+        <div class="mt-20 text-center text-gray-500 text-sm">
+            <p>© 2023 抽奖活动组委会 版权所有</p>
+        </div>
+    </div>
+
+    <!-- 活动规则弹窗 -->
+    <div id="rules-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 modal-backdrop"></div>
+        <div
+            class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto m-4 border-4 border-secondary">
+            <div class="p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-festive text-[clamp(1.5rem,3vw,2rem)] text-primary">活动规则</h3>
+                    <button id="close-rules-btn" class="text-gray-500 hover:text-primary text-2xl transition-colors">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6 text-gray-700">
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">活动时间</h4>
+                        <p>每场活动时间为1天， 22:30 准时开奖。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">抽奖权重</h4>
+                        <p>以活动当天每位用户成功下单的“代拿”快递订单数量为依据（虚假或刷单订单无效）。每下一个有效订单可获得一个抽奖码。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">奖品公示</h4>
+                        <p>每场活动的具体奖品数量及代金券额度，将于正式抽奖开始前在当前页面明确公示。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">奖品性质</h4>
+                        <p>奖品为“无门槛”的“代拿”代金券。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">中奖通知</h4>
+                        <p>中奖结果将于开奖后在当前页面公示，并通过微信一对一通知中奖者。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">有效期</h4>
+                        <p>中奖代金券需在七天内使用，逾期未使用视为自动放弃。</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">使用规定</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>本活动所获奖品代金券仅限于中奖者本人使用，严禁任何形式的转让、出售、兑换现金或进行其他线下交易。</li>
+                            <li>使用时，中奖者必须通过主办方发送中奖通知的原始微信对话窗口出示中奖信息，以供核验。</li>
+                            <li>任何因代金券转让、买卖、泄露或因非中奖者本人使用而引发的纠纷（包括但不限于冒用、盗用、欺诈等），均由中奖者自行承担全部责任，主办方概不负责，且有权作废该代金券。</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-primary text-lg mb-2">解释权</h4>
+                        <p>本活动所有事宜均由活动主办方依法依规负责解释和说明。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彩带动画容器 -->
+    <div id="confetti-container" class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-50">
+    </div>
+
+    <script>
+        // 控制开奖状态的函数
+        // isDrawn为true表示已开奖，false表示未开奖
+        function setLotteryStatus(isDrawn) {
+            const winnersContainer = document.getElementById('winners-container');
+            const notDrawnContainer = document.getElementById('not-drawn-container');
+            const celebrationMessage = document.getElementById('celebration-message');
+            const statusDescription = document.getElementById('status-description');
+
+            if (isDrawn) {
+                // 已开奖状态
+                statusDescription.textContent = "恭喜以下幸运儿获得本次活动奖品！";
+                notDrawnContainer.classList.add('hidden');
+                winnersContainer.classList.remove('hidden');
+                celebrationMessage.classList.remove('hidden');
+
+                // 清空并重新创建中奖者
+                winnersContainer.innerHTML = '';
+                initWinners();
+            } else {
+                // 未开奖状态
+                statusDescription.textContent = "抽奖活动即将开始，敬请期待！";
+                notDrawnContainer.classList.remove('hidden');
+                winnersContainer.classList.add('hidden');
+                celebrationMessage.classList.add('hidden');
+            }
+        }
+
+        // 创建中奖者卡片的函数
+        function createUser(username, _str, detail) {
+            // 创建卡片容器
+            const card = document.createElement('div');
+            card.className = 'winner-card bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl border-4 border-secondary opacity-0';
+
+            // 设置卡片内容
+            card.innerHTML = `
+                <div class="h-2 bg-gradient-to-r from-primary to-accent"></div>
+                <div class="p-6 text-center">
+                    <div class="mb-4">
+                        <span class="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                            幸运中奖者
+                        </span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">${username}</h3>
+                    <p class="text-gray-600 mb-4">${_str}</p>
+                    <div class="flex justify-center space-x-2 mb-6">
+                        <i class="fa fa-trophy text-secondary text-2xl animate-pulse"></i>
+                        <i class="fa fa-gift text-primary text-2xl"></i>
+                        <i class="fa fa-star text-secondary text-2xl animate-pulse"></i>
+                    </div>
+                    <p class="text-primary font-medium">${detail}</p>
+                </div>
+            `;
+
+            // 添加到容器
+            document.getElementById('winners-container').appendChild(card);
+
+            return card;
+        }
+
+        // 初始化中奖者
+        function initWinners() {
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', $HOST + '/getWinners.php', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        const winners = result.data.winners || [];
+                        const title = result.data.title || '神秘大奖'; // 获奖内容使用title字段
+
+                        // 遍历中奖者数据，依次创建并显示
+                        winners.forEach((winner, index) => {
+                            // 处理building字段（确保存在且格式正确）
+                            const building = winner.building || '未知-000';
+
+                            // 名字使用building的第一部分（以-分割）
+                            const name = building.split('-')[0] || '未知用户';
+
+                            // 会员编号：完整building字段，后两位替换为*
+                            const memberId = building.length > 2
+                                ? building.slice(0, -2) + '**'
+                                : building + (building.length === 1 ? '*' : '');
+
+                            // 获奖内容使用title字段
+                            const award = `获得 ${title}`;
+
+                            // 创建中奖者元素
+                            const winnerEl = createUser(name, `会员编号: ${memberId}`, award);
+
+                            // 按顺序添加动画（保持原时间间隔）
+                            const delay = 500 + (index * 700); // 500, 1200, 1900...
+                            setTimeout(() => {
+                                winnerEl.classList.add('animate-float');
+                                fadeIn(winnerEl, 200);
+
+                                // 最后一个中奖者显示时创建彩带
+                                if (index === winners.length - 1) {
+                                    createConfetti(100);
+                                }
+                            }, delay);
+                        });
+                    } else {
+                        top.showMessage(result.msg, 3000, 'red');
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+
+        // 淡入动画函数
+        function fadeIn(element, duration) {
+            let opacity = 0;
+            element.style.opacity = 0;
+            const interval = 16; // ~60fps
+            const step = interval / duration;
+
+            const timer = setInterval(() => {
+                opacity += step;
+                element.style.opacity = opacity;
+
+                if (opacity >= 1) {
+                    element.style.opacity = 1;
+                    clearInterval(timer);
+                }
+            }, interval);
+        }
+
+        // 创建彩带动画
+        function createConfetti(count) {
+            const container = document.getElementById('confetti-container');
+
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+
+                // 随机颜色
+                const colors = ['#D81F26', '#FFD700', '#FF6B6B', '#9E2A2B', '#FFECB3'];
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+
+                // 随机大小
+                const size = Math.random() * 10 + 5;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+
+                // 随机位置
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = `-${size}px`;
+
+                // 随机动画
+                const duration = Math.random() * 5 + 3;
+                const delay = Math.random() * 5;
+                const rotation = Math.random() * 360;
+
+                confetti.style.animation = `
+                    fall ${duration}s ease-in ${delay}s forwards,
+                    sway ${(Math.random() * 2 + 2)}s ease-in-out ${delay}s infinite alternate
+                `;
+                confetti.style.transform = `rotate(${rotation}deg)`;
+
+                container.appendChild(confetti);
+
+                // 动画结束后移除
+                setTimeout(() => {
+                    confetti.remove();
+                }, (duration + delay) * 1000);
+            }
+        }
+
+        // 活动规则弹窗控制
+        function setupRulesModal() {
+            const modal = document.getElementById('rules-modal');
+            const showButtons = [
+                document.getElementById('show-rules-btn'),
+                document.getElementById('show-rules-btn-2')
+            ];
+            const closeButton = document.getElementById('close-rules-btn');
+            const backdrop = modal.querySelector('.modal-backdrop');
+
+            // 显示弹窗
+            showButtons.forEach(button => {
+                if (button) {
+                    button.addEventListener('click', () => {
+                        modal.classList.remove('hidden');
+                        modal.classList.add('flex');
+                        document.body.style.overflow = 'hidden'; // 防止背景滚动
+
+                        // 添加淡入动画
+                        setTimeout(() => {
+                            modal.querySelector('div:not(.modal-backdrop)').classList.add('animate-fade-in');
+                        }, 10);
+                    });
+                }
+            });
+
+            // 关闭弹窗
+            function closeModal() {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = ''; // 恢复背景滚动
+            }
+
+            closeButton.addEventListener('click', closeModal);
+            backdrop.addEventListener('click', closeModal);
+
+            // 按ESC键关闭
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
+        }
+
+        // 添加彩带动画和弹窗样式
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall {
+                to {
+                    transform: translateY(100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes sway {
+                from {
+                    transform: translateX(-20px) rotate(0deg);
+                }
+                to {
+                    transform: translateX(20px) rotate(30deg);
+                }
+            }
+            
+            @keyframes fade-in {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+            
+            .animate-fade-in {
+                animation: fade-in 0.3s ease-out forwards;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            // 初始化规则弹窗
+            setupRulesModal();
+            let xhr = new XMLHttpRequest();
+            xhr.open('GET', $HOST + '/getCjStatus.php', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        if (result.status == 1) {
+                            setLotteryStatus(false);
+                            top.showMessage('活动未开始', 3000, 'red');
+                        } else {
+                            setLotteryStatus(true);
+                        }
+                    }
+                }
+            };
+            xhr.send();
+
+            // 调用此函数控制状态：true表示已开奖，false表示未开奖
+            // setLotteryStatus(false);  // 默认显示已开奖状态
+        });
+    </script>
+</body>
+
+</html>
