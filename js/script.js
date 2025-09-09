@@ -1207,6 +1207,8 @@ function closeShareModal() {
 
 // 设置当前快递为完成
 function setDataSuccess(id) {
+    // clickOKisAll
+    let clickOKisAll = document.getElementById("clickOKisAll").checked; // 是否全部完成(同一个人都是待分享同一天)
     let xhr = new XMLHttpRequest();
     xhr.open('POST', $HOST + '/setDataSuccess.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -1214,15 +1216,20 @@ function setDataSuccess(id) {
         if (xhr.readyState === 4 && xhr.status === 200) {
             let result = JSON.parse(xhr.responseText);
             if (result.code === 200) {
+                // 如果clickOKisAll没选中，则选中
+                if (!clickOKisAll) {
+                    document.getElementById("clickOKisAll").checked = true;
+                }
                 top.showMessage(result.msg);
                 closeShareModal()
                 getData();
+
             } else {
                 top.showMessage(result.msg, 3000, 'red');
             }
         }
     };
-    xhr.send(`id=${id}&token=${getToken()}`)
+    xhr.send(`id=${id}&token=${getToken()}&clickOKisAll=${clickOKisAll}`)
 }
 
 // 删除当前快递的图片数据
