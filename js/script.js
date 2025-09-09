@@ -738,10 +738,11 @@ function init() {
         const file = event.target.files[0];
 
         if (file && file.type.match('image.*')) {
-            const reader = new FileReader();
 
-            // 显示压缩中消息
-            top.showMessage('正在压缩图片...');
+            // 加载动画
+            top.showLoading("正在压缩图片...");
+
+            const reader = new FileReader();
 
             reader.onload = function (e) {
 
@@ -781,7 +782,7 @@ function init() {
                     // 获取压缩后的图片数据
                     canvas.toBlob(function (compressedBlob) {
                         // 更新消息
-                        top.showMessage('正在上传图片...');
+                        top.showLoading('正在上传图片...');
 
                         // 创建FormData并添加两个图片
                         const formData = new FormData();
@@ -798,6 +799,7 @@ function init() {
                         xhr.onload = function () {
                             if (xhr.status === 200) {
                                 try {
+                                    top.closeLoading();
                                     const response = JSON.parse(xhr.responseText);
                                     if (response.success) {
                                         top.showMessage('图片上传成功!', 3000, 'green');
@@ -825,14 +827,17 @@ function init() {
                                     }
                                 } catch (e) {
                                     top.showMessage('服务器响应异常', 3000, 'red');
+                                    top.closeLoading();
                                 }
                             } else {
                                 top.showMessage('上传失败，状态码: ' + xhr.status, 3000, 'red');
+                                top.closeLoading();
                             }
                         };
 
                         xhr.onerror = function () {
                             top.showMessage('上传发生错误', 3000, 'red');
+                            top.closeLoading();
                         };
 
                         xhr.send(formData); // 发送FormData（浏览器自动加正确的Content-Type）
