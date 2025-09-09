@@ -185,6 +185,7 @@ function addRecord() {
         top.showMessage("请选择微信名！", 3000, 'red');
         return;
     }
+    top.showLoading("增加新记录...");
     let all = addRecordCheck();
     let type;
     let codes = [];
@@ -217,9 +218,11 @@ function addRecord() {
     xhr.onreadystatechange = function () {
         if (xhr.readyState === 4 && xhr.status === 200) {
             console.log(xhr.responseText);
+            top.closeLoading();
             let result = JSON.parse(xhr.responseText);
             if (result.code == 200) {
                 getData();
+                resetToDefault();//重置快递包裹条目为1，更新索引排序
                 //刷新数据
                 closeModal();
                 top.showMessage(result.msg);
@@ -964,14 +967,21 @@ function generateToken() {
 }
 
 
-// 增加数据（多条数据多组数据插入）
+// 全局变量，确保所有函数都能访问到
+let groupCount = 1;
+const container = document.getElementById('express-groups-container');
+let initialGroupHTML;
+
 document.addEventListener('DOMContentLoaded', function () {
-    let groupCount = 1;
-    const container = document.getElementById('express-groups-container');
+    // 保存初始状态（页面加载时的第一组数据）
+    const initialGroup = document.querySelector('.express-group');
+    if (initialGroup) {
+        initialGroupHTML = initialGroup.outerHTML;
+    }
 
     // 添加新组
     document.getElementById('add-group-btn').addEventListener('click', function () {
-        groupCount++;
+        groupCount++; // 递增计数器，确保从2开始
         const newGroup = document.createElement('div');
         newGroup.className = 'express-group';
         newGroup.style = `
@@ -1022,9 +1032,7 @@ document.addEventListener('DOMContentLoaded', function () {
             groupCount--;
 
             // 更新序号
-            document.querySelectorAll('.express-group').forEach((group, index) => {
-                group.querySelector('span').textContent = `包裹 #${index + 1}`;
-            });
+            updateGroupNumbers();
 
             // 如果只剩一组，禁用删除按钮
             if (groupCount === 1) {
@@ -1033,6 +1041,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// 复原到默认状态的函数（仅定义，未绑定到任何监听器）
+function resetToDefault() {
+    // 获取所有组元素
+    const allGroups = container.querySelectorAll('.express-group');
+
+    // 只保留第一组，删除其他组
+    if (allGroups.length > 1) {
+        for (let i = 1; i < allGroups.length; i++) {
+            allGroups[i].remove();
+        }
+    }
+
+    // 重置计数器为1，确保下次新增从2开始
+    groupCount = 1;
+
+    // 更新序号为#1
+    const firstGroup = container.querySelector('.express-group');
+    if (firstGroup) {
+        firstGroup.querySelector('span').textContent = `包裹 #1`;
+
+        // 禁用第一组的删除按钮
+        const removeBtn = firstGroup.querySelector('.remove-group-btn');
+        if (removeBtn) {
+            removeBtn.disabled = true;
+
+            // 重新绑定删除事件
+            removeBtn.addEventListener('click', function () {
+                const currentGroups = document.querySelectorAll('.express-group');
+                if (currentGroups.length > 1) {
+                    this.closest('.express-group').remove();
+                    groupCount--;
+                    updateGroupNumbers();
+
+                    if (document.querySelectorAll('.express-group').length === 1) {
+                        document.querySelector('.express-group:first-child .remove-group-btn').disabled = true;
+                    }
+                }
+            });
+        }
+
+        // 清空第一组的输入框内容
+        firstGroup.querySelectorAll('input').forEach(input => {
+            input.value = '';
+        });
+    }
+}
+
+// 更新序号的功能函数
+function updateGroupNumbers() {
+    document.querySelectorAll('.express-group').forEach((group, index) => {
+        group.querySelector('span').textContent = `包裹 #${index + 1}`;
+    });
+}
+
 
 // 筛选数据
 function selectData(no) {
@@ -1103,7 +1166,7 @@ function statusClick(status, id) {
                                 AndroidClipboard.copyText(wechatName + "$" + shareURL);
                                 top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
                             } else if (navigator.clipboard) {
-                                
+
                                 navigator.clipboard.writeText(shareURL).then(function () {
                                     top.showMessage("图片分享地址已复制到剪贴板", 3000, "green");
                                 }).catch(function () {
