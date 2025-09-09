@@ -443,8 +443,13 @@
 
                 </div>
             </div>
-            <div style="display: flex; justify-content: end; padding-right: 20px;">
-                <button class="btn btn-success" onclick="setDataSuccess(top.upload_image_data_id)">完成</button>
+
+            <div style="display: flex;flex-direction: row;align-items: center;justify-content: flex-end;">
+
+                <div>
+                    <input type="checkbox" id="clickOKisAll" checked><label for="clickOKisAll">同一个人全部完成</label>
+                </div>
+                <button class="btn btn-success" onclick="setDataSuccess(top.upload_image_data_id)" style="margin-right: 20px; margin-left: 20px;">完成</button>
             </div>
             <div class="modal-footer">
                 <!-- 调换删除和复制按钮的位置 -->
