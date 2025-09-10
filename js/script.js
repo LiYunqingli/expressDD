@@ -1098,32 +1098,56 @@ function updateGroupNumbers() {
 
 
 // 筛选数据
-function selectData(no) {
+function selectData(columnNo) {
     const trs = document.querySelectorAll('#records-table tbody tr');
-    let types = [];
+    let typeCounts = {};
+
+    // 统计每种类型的数量
     trs.forEach(tr => {
-        let type = tr.querySelector(`td:nth-child(${no})`).innerText;
-        if (!types.includes(type)) {
-            types.push(type);
+        let type = tr.querySelector(`td:nth-child(${columnNo})`).innerText.trim();
+        if (type) {
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
         }
     });
-    console.log(types);
-    // let options = [{text:'text1',selected:false},{text:'text2',selected:false}];
-    let options = types.map(type => {
-        return { text: type, selected: false };
-    });
-    radioList.show('选择需要筛选的栋', options, (selected) => {
-        top.showMessage("点击了" + selected.text);
-        delNotSelectData(selected.text, no);
-    });
-}
 
-function delNotSelectData(selectDataText, no) {
-    const trs = document.querySelectorAll('#records-table tbody tr');
-    trs.forEach(tr => {
-        let type = tr.querySelector(`td:nth-child(${no})`).innerText;
-        if (type != selectDataText) {
-            tr.remove();
+    // 创建选项数组
+    let options = Object.keys(typeCounts).map(type => {
+        return {
+            text: type,
+            value: type,
+            count: typeCounts[type],
+            selected: true  // 默认全部选中，但会被记忆状态覆盖
+        };
+    });
+
+    // 设置列键，用于记忆选择状态
+    selectList.setColumnKey(`column_${columnNo}`);
+
+    // 显示筛选列表
+    selectList.show('选择需要筛选的类型', options, (selectedOptions) => {
+        // 获取所有选中的值
+        const selectedValues = selectedOptions.map(opt => opt.value);
+
+        // 显示或隐藏表格行
+        trs.forEach(tr => {
+            let type = tr.querySelector(`td:nth-child(${columnNo})`).innerText.trim();
+            if (selectedValues.includes(type)) {
+                tr.style.display = ''; // 显示匹配的行
+            } else {
+                tr.style.display = 'none'; // 隐藏不匹配的行
+            }
+        });
+
+        // 显示提示信息
+        const selectedCount = selectedOptions.length;
+        const totalCount = options.length;
+
+        if (selectedCount === totalCount) {
+            top.showMessage("已显示所有类型");
+        } else if (selectedCount === 0) {
+            top.showMessage("已隐藏所有类型");
+        } else {
+            top.showMessage(`已选择 ${selectedCount}/${totalCount} 种类型`);
         }
     });
 }
