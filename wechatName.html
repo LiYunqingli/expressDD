@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式宿舍用户信息编辑器</title>
+    <script src="./js/lib.js"></script>
+    <script src="./js/showMessage.js"></script>
+    <link rel="stylesheet" href="./css/message-box.css">
+    <script>
+        //本地检查登录状态
+        if (!checkLoginToken()) {
+            window.location.href = $HOST_HOME;
+        } else {
+            //服务器检查登录状态
+            checkLoginTokenIsTrue();
+        }
+    </script>
+    <style>
+        /* 全局样式重置与基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 1rem;
+            /* 移动端减小内边距 */
+        }
+
+        /* 响应式容器：PC端最大宽度限制，移动端全屏 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+            /* 适配移动端的内边距 */
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 0.6rem;
+            font-size: 1.5rem;
+            /* 响应式字体大小 */
+        }
+
+        /* 折叠菜单核心样式 */
+        .building-group {
+            margin-bottom: 0.8rem;
+            border: 1px solid #eaecef;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .building-group:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 一级分类：栋（点击整个头部触发折叠/展开） */
+        .building-header {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            /* 移动端减小内边距 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #495057;
+            transition: background-color 0.2s ease;
+            user-select: none;
+            /* 禁止文本选中，提升点击体验 */
+        }
+
+        .building-header:hover {
+            background-color: #f1f3f5;
+        }
+
+        .building-title {
+            font-size: 1rem;
+            /* 响应式字体 */
+            flex: 1;
+            /* 标题占满剩余空间，图标靠右 */
+        }
+
+        /* 折叠状态图标（替代独立按钮，随状态切换） */
+        .toggle-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            margin-left: 10px;
+            /* 与标题保持间距 */
+        }
+
+        .building-header.expanded .toggle-icon {
+            background-color: #409eff;
+            color: #fff;
+            transform: rotate(45deg);
+            /* 展开时图标旋转45度（+变×） */
+        }
+
+        /* 二级分类：宿舍号（响应式布局） */
+        .dorm-list {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            /* 平滑展开/折叠动画 */
+        }
+
+        .building-header.expanded+.dorm-list {
+            max-height: 2000px;
+            /* 足够大的高度容纳所有内容 */
+        }
+
+        .dorm-item {
+            padding: 12px 15px;
+            /* 移动端适配内边距 */
+            border-top: 1px solid #eaecef;
+        }
+
+        .dorm-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        /* 响应式用户表格：移动端横向滚动，PC端自适应 */
+        .table-container {
+            overflow-x: auto;
+            /* 移动端表格横向滚动 */
+        }
+
+        .user-table {
+            width: 100%;
+            min-width: 320px;
+            /* 确保移动端表格最小宽度 */
+            border-collapse: collapse;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 8px 10px;
+            /* 移动端减小内边距 */
+            text-align: left;
+            border-bottom: 1px solid #f1f3f5;
+            font-size: 0.85rem;
+            /* 响应式字体 */
+        }
+
+        .user-table th {
+            background-color: #fafbfc;
+            font-weight: 600;
+            color: #6c757d;
+            white-space: nowrap;
+            /* 表头不换行 */
+        }
+
+        .user-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 响应式按钮：移动端调整大小和间距 */
+        .btn {
+            padding: 4px 8px;
+            /* 移动端减小按钮尺寸 */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            /* 响应式字体 */
+            transition: all 0.2s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            /* 移动端按钮换行时增加垂直间距 */
+        }
+
+        .btn-edit {
+            background-color: #409eff;
+            color: #fff;
+        }
+
+        .btn-edit:hover {
+            background-color: #337ecc;
+        }
+
+        .btn-save {
+            background-color: #67c23a;
+            color: #fff;
+        }
+
+        .btn-save:hover {
+            background-color: #52a629;
+        }
+
+        .btn-cancel {
+            background-color: #909399;
+            color: #fff;
+        }
+
+        .btn-cancel:hover {
+            background-color: #73767a;
+        }
+
+        .btn-delete {
+            background-color: #f56c6c;
+            color: #fff;
+        }
+
+        .btn-delete:hover {
+            background-color: #d34848;
+        }
+
+        /* 响应式输入框 */
+        .edit-input {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .edit-input:focus {
+            outline: none;
+            border-color: #409eff;
+        }
+
+        /* 响应式提示信息 */
+        .message {
+            margin: 1rem 0;
+            padding: 8px 12px;
+            /* 移动端减小内边距 */
+            border-radius: 4px;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            background-color: #f0f9eb;
+            color: #67c23a;
+            border: 1px solid #e1f3d8;
+        }
+
+        .error {
+            background-color: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fde2e2;
+        }
+
+        /* 空数据提示（响应式） */
+        .empty-tip {
+            color: #909399;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        /* PC端特殊样式（屏幕宽度≥768px） */
+        @media (min-width: 768px) {
+            body {
+                padding: 2rem;
+            }
+
+            .container {
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.8rem;
+            }
+
+            .building-header {
+                padding: 14px 20px;
+            }
+
+            .building-title {
+                font-size: 1.05rem;
+            }
+
+            .toggle-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 1.2rem;
+            }
+
+            .dorm-item {
+                padding: 15px 20px;
+            }
+
+            .dorm-title {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .user-table th,
+            .user-table td {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 5px 10px;
+                font-size: 0.85rem;
+                margin-bottom: 0;
+            }
+
+            .edit-input {
+                padding: 5px 8px;
+                font-size: 0.9rem;
+            }
+
+            .message {
+                padding: 10px 15px;
+                font-size: 0.95rem;
+            }
+
+            .empty-tip {
+                padding: 20px;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>宿舍用户信息管理</h1>
+        <div class="message" id="message"></div>
+        <!-- 折叠菜单容器（JS动态生成） -->
+        <div id="buildingContainer"></div>
+    </div>
+
+    <script>
+        // 1. 模拟数据库用户数据（与原表结构一致）
+        // const userData = [
+        //     { id: 8, building: '梅A-101', wechat_name: '客户1', create_at: 'admin' },
+        //     { id: 9, building: '梅A-101', wechat_name: '客户2', create_at: 'admin' },
+        //     { id: 10, building: '梅B-101', wechat_name: '客户5', create_at: 'admin' },
+        //     { id: 11, building: '梅B-101', wechat_name: '客户6', create_at: 'admin' },
+        //     { id: 12, building: '桃A-101', wechat_name: '客户7', create_at: 'admin' },
+        //     { id: 13, building: '菊B-101', wechat_name: '11', create_at: 'admin' },
+        //     { id: 14, building: '榕A-101', wechat_name: 'fdsa', create_at: 'admin' },
+        //     { id: 15, building: '桂A-111', wechat_name: '123', create_at: 'admin' },
+        //     { id: 16, building: '梅A-101', wechat_name: 'fdsa', create_at: 'admin' },
+        //     { id: 17, building: '梅B-111', wechat_name: 'fdsafdsa', create_at: 'admin' },
+        //     { id: 18, building: '梅A-111', wechat_name: 'fdsfdsafdsfdsa', create_at: 'admin' },
+        //     { id: 19, building: '楠A-101', wechat_name: '测试', create_at: 'admin' },
+        //     { id: 20, building: '兰A-101', wechat_name: 'ffff', create_at: 'admin' }
+        // ];
+
+        var userData = [];
+
+        // 2. 数据预处理：按“栋-宿舍号”二级分组（支持排序）
+        function groupDataByBuildingAndDorm() {
+            const groupedData = {};
+
+            userData.forEach(user => {
+                // 拆分“栋-宿舍号”（如“梅A-101”→“梅A”和“101”）
+                const [building, dorm] = user.building.split('-');
+                if (!building || !dorm) return; // 过滤格式异常数据
+
+                // 一级分组：按“栋”（如梅A）
+                if (!groupedData[building]) {
+                    groupedData[building] = { dorms: {} };
+                }
+
+                // 二级分组：按“宿舍号”（如101）
+                if (!groupedData[building].dorms[dorm]) {
+                    groupedData[building].dorms[dorm] = [];
+                }
+
+                // 添加用户到对应分组
+                groupedData[building].dorms[dorm].push(user);
+            });
+
+            // 排序：“栋”按名称拼音排序，“宿舍号”按数字排序
+            return Object.keys(groupedData).sort((a, b) => a.localeCompare(b)).reduce((sorted, building) => {
+                sorted[building] = groupedData[building];
+                // 宿舍号按数字升序（101 < 111）
+                sorted[building].dorms = Object.keys(sorted[building].dorms).sort((a, b) => a - b).reduce((dormSorted, dorm) => {
+                    dormSorted[dorm] = sorted[building].dorms[dorm];
+                    return dormSorted;
+                }, {});
+                return sorted;
+            }, {});
+        }
+
+        // 3. DOM元素引用
+        const buildingContainer = document.getElementById('buildingContainer');
+        const messageBox = document.getElementById('message');
+
+        // 4. 渲染响应式折叠菜单
+        function renderCollapsibleMenu() {
+            const groupedData = groupDataByBuildingAndDorm();
+            buildingContainer.innerHTML = '';
+
+            // 空数据提示
+            if (Object.keys(groupedData).length === 0) {
+                buildingContainer.innerHTML = '<div class="empty-tip">暂无宿舍用户数据</div>';
+                return;
+            }
+
+            // 遍历“栋”分组（一级菜单）
+            Object.keys(groupedData).forEach(building => {
+                const buildingGroup = document.createElement('div');
+                buildingGroup.className = 'building-group';
+                buildingGroup.dataset.building = building;
+
+                // 一级菜单头部（点击整个头部触发折叠/展开）
+                const buildingHeader = document.createElement('div');
+                buildingHeader.className = 'building-header'; // 初始折叠状态，无expanded类
+                buildingHeader.innerHTML = `
+                    <div class="building-title">${building} 栋</div>
+                    <div class="toggle-icon">+</div> <!-- 折叠图标 -->
+                `;
+
+                // 二级菜单容器（宿舍列表）
+                const dormList = document.createElement('div');
+                dormList.className = 'dorm-list';
+
+                // 遍历当前“栋”下的“宿舍号”分组（二级菜单）
+                const dorms = groupedData[building].dorms;
+                Object.keys(dorms).forEach(dorm => {
+                    const dormItem = document.createElement('div');
+                    dormItem.className = 'dorm-item';
+                    dormItem.dataset.dorm = dorm;
+
+                    // 宿舍标题
+                    const dormTitle = document.createElement('div');
+                    dormTitle.className = 'dorm-title';
+                    dormTitle.textContent = `宿舍 ${dorm}`;
+
+                    // 响应式表格容器（解决移动端横向滚动）
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'table-container';
+
+                    // 用户表格
+                    const userTable = document.createElement('table');
+                    userTable.className = 'user-table';
+                    userTable.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>微信名称</th>
+                                <th>创建人</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="user-table-body"></tbody>
+                    `;
+
+                    // 渲染宿舍内用户数据
+                    const userTableBody = userTable.querySelector('.user-table-body');
+                    dorms[dorm].forEach(user => {
+                        const row = document.createElement('tr');
+                        row.dataset.id = user.id;
+                        row.innerHTML = `
+                            <td>${user.id}</td>
+                            <td class="wechat-name-cell">${user.wechat_name}</td>
+                            <td>${user.create_at}</td>
+                            <td>
+                                <button class="btn btn-edit" data-action="edit">编辑</button>
+                                <button class="btn btn-delete" data-action="delete">删除</button>
+                            </td>
+                        `;
+                        userTableBody.appendChild(row);
+                    });
+
+                    // 组装宿舍项：标题 + 响应式表格容器
+                    tableContainer.appendChild(userTable);
+                    dormItem.appendChild(dormTitle);
+                    dormItem.appendChild(tableContainer);
+                    dormList.appendChild(dormItem);
+                });
+
+                // 组装“栋”分组
+                buildingGroup.appendChild(buildingHeader);
+                buildingGroup.appendChild(dormList);
+                buildingContainer.appendChild(buildingGroup);
+            });
+        }
+
+        // 5. 显示操作提示（响应式样式）
+        function showMessage(text, isSuccess = true) {
+            messageBox.textContent = text;
+            messageBox.className = `message ${isSuccess ? 'success' : 'error'}`;
+            messageBox.style.display = 'block';
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+
+        // 6. 折叠/展开逻辑（点击“栋”头部触发）
+        function toggleBuilding(buildingHeader) {
+            // 切换头部的expanded类（控制样式和菜单状态）
+            buildingHeader.classList.toggle('expanded');
+            // 更新图标文本（+ 折叠 / × 展开）
+            const icon = buildingHeader.querySelector('.toggle-icon');
+            icon.textContent = buildingHeader.classList.contains('expanded') ? '×' : '+';
+        }
+
+        // 7. 编辑微信名称逻辑
+        function handleEdit(row, userId) {
+            const wechatNameCell = row.querySelector('.wechat-name-cell');
+            const originalName = wechatNameCell.textContent;
+            const actionBtns = row.querySelector('td:last-child');
+
+            // 替换为输入框（进入编辑状态）
+            wechatNameCell.innerHTML = `<input type="text" class="edit-input" value="${originalName}">`;
+            // 替换按钮为“保存”“取消”
+            actionBtns.innerHTML = `
+                <button class="btn btn-save" data-action="save">保存</button>
+                <button class="btn btn-cancel" data-action="cancel">取消</button>
+            `;
+
+            // 自动聚焦输入框
+            const input = wechatNameCell.querySelector('.edit-input');
+            input.focus();
+            input.select();
+
+            // 保存按钮事件
+            const saveBtn = actionBtns.querySelector('.btn-save');
+            saveBtn.addEventListener('click', () => {
+                const newName = input.value.trim();
+                if (!newName) {
+                    showMessage('微信名称不能为空', false);
+                    return;
+                }
+
+                // 更新数据源
+                const userIndex = userData.findIndex(u => u.id === userId);
+                if (userIndex !== -1) {
+                    userData[userIndex].wechat_name = newName;
+                    // 重新渲染并恢复展开状态
+                    const expandedBuildings = getExpandedBuildings();
+                    renderCollapsibleMenu();
+                    restoreExpandedBuildings(expandedBuildings);
+                    showMessage('微信名称修改成功');
+                } else {
+                    showMessage('未找到用户数据', false);
+                }
+            });
+
+            // 取消按钮事件
+            const cancelBtn = actionBtns.querySelector('.btn-cancel');
+            cancelBtn.addEventListener('click', () => {
+                // 恢复原始状态
+                wechatNameCell.textContent = originalName;
+                actionBtns.innerHTML = `
+                    <button class="btn btn-edit" data-action="edit">编辑</button>
+                    <button class="btn btn-delete" data-action="delete">删除</button>
+                `;
+            });
+        }
+
+        // 8. 删除用户记录逻辑
+        function handleDelete(userId) {
+            if (!confirm('确定要删除这条用户记录吗？')) {
+                return;
+            }
+
+            // 从数据源删除
+            const userIndex = userData.findIndex(u => u.id === userId);
+            if (userIndex !== -1) {
+                const deletedUser = userData.splice(userIndex, 1)[0];
+                // 重新渲染并恢复展开状态
+                const expandedBuildings = getExpandedBuildings();
+                renderCollapsibleMenu();
+                restoreExpandedBuildings(expandedBuildings);
+                showMessage(`已删除用户：${deletedUser.wechat_name}`);
+            } else {
+                showMessage('未找到要删除的用户', false);
+            }
+        }
+
+        // 辅助函数：记录当前展开的“栋”（用于重新渲染后恢复状态）
+        function getExpandedBuildings() {
+            const expanded = [];
+            document.querySelectorAll('.building-header.expanded').forEach(header => {
+                const building = header.closest('.building-group').dataset.building;
+                expanded.push(building);
+            });
+            return expanded;
+        }
+
+        // 辅助函数：恢复展开的“栋”状态
+        function restoreExpandedBuildings(expandedBuildings) {
+            expandedBuildings.forEach(building => {
+                const header = document.querySelector(`.building-group[data-building="${building}"] .building-header`);
+                if (header && !header.classList.contains('expanded')) {
+                    toggleBuilding(header); // 触发展开
+                }
+            });
+        }
+
+        // 9. 统一事件委托（处理所有交互）
+        buildingContainer.addEventListener('click', (e) => {
+            const target = e.target;
+
+            // 1. 折叠/展开操作（点击“栋”头部任意位置）
+            const buildingHeader = target.closest('.building-header');
+            if (buildingHeader) {
+                toggleBuilding(buildingHeader);
+                return;
+            }
+
+            // 2. 编辑/删除/保存/取消操作（针对表格按钮）
+            const btn = target.closest('.btn');
+            if (!btn) return;
+
+            const row = btn.closest('tr');
+            if (!row) return;
+
+            const userId = parseInt(row.dataset.id);
+            const action = btn.dataset.action;
+
+            switch (action) {
+                case 'edit':
+                    handleEdit(row, userId);
+                    break;
+                case 'delete':
+                    handleDelete(userId);
+                    break;
+            }
+        });
+
+        // 10. 页面加载初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', $HOST + '/getBuildingUserList.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code === 200) {
+                        top.showMessage(result.msg);
+                        userData = result.data;
+                        renderCollapsibleMenu();
+                    } else if (result.code === 201) {
+                        top.showMessage(result.msg);
+                    } else {
+                        top.showMessage(result.msg, 3000, 'red');
+                    }
+                }
+            };
+            xhr.send("token=" + getToken());
+        });
+    </script>
+</body>
+
+</html>
