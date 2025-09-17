@@ -64,7 +64,7 @@ if ($result) {
 
         // 使用building_users_id查询building信息
         if (!empty($building_users_id)) {
-            $sql = "SELECT building FROM building_users WHERE id = ?";
+            $sql = "SELECT building, wechat_name FROM building_users WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $building_users_id);
             $stmt->execute();
@@ -73,6 +73,7 @@ if ($result) {
             if ($buildingResult && $buildingResult->num_rows > 0) {
                 $buildingRow = $buildingResult->fetch_assoc();
                 $winner['building'] = $buildingRow['building'];
+                $winner['wechat_name'] = $buildingRow['wechat_name'];
                 // 将最后面两位字符改为*
                 $winner['building'] = substr($winner['building'], 0, -2) . '**';
             } else {
