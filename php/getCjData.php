@@ -8,12 +8,13 @@ include 'lib.php';
 $pid = $_POST['pid'];
 
 if (checkParm($pid)) {
-    $sql = "SELECT building_users_id FROM `data` WHERE id = '$pid'";
+    $sql = "SELECT building_users_id, `time` FROM `data` WHERE id = '$pid'";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
         $data = $result->fetch_assoc();
+        $time = $data['time'];
         $data = $data['building_users_id'];
-        $sql = "SELECT * FROM `data` WHERE building_users_id = '$data' AND id != '$pid' AND `time` = CURDATE()";
+        $sql = "SELECT * FROM `data` WHERE building_users_id = '$data' AND id != '$pid' AND `time` = '$time'";
         $result = $conn->query($sql);
         if ($result->num_rows > 0) {
             $data = $result->fetch_all(MYSQLI_ASSOC);
@@ -65,7 +66,7 @@ if (checkParm($pid)) {
         } else {
             $arr = array(
                 "code" => 201,
-                "msg" => "今天只有一个快递",
+                "msg" => "当天只有一个快递",
                 "data" => []
             );
         }
