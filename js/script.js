@@ -83,8 +83,9 @@ function clickRow(id) {
     let clickedRowTds = document.querySelectorAll(`#${id} td`);
     let building = clickedRowTds[1].innerText;
     let room = clickedRowTds[2].innerText;
-    top.showMessage(`已选中 "${building} ${room}"`)
+    // top.showMessage(`已选中 "${building} ${room}"`)
     let allRow = document.querySelectorAll("#records-table tbody tr");
+    let count = 0;
     allRow.forEach((row) => {
         // console.log(row);
         //#e3f2fd
@@ -94,14 +95,21 @@ function clickRow(id) {
             if (row.style.backgroundColor == '#e3f2fd' || row.style.backgroundColor == 'rgb(227, 242, 253)') {
                 //去掉行内样式
                 row.style.backgroundColor = '';
+
             } else {
                 row.style.backgroundColor = '#e3f2fd';
+                count++;
             }
         } else {
             //去掉行内样式
             row.style.backgroundColor = '';
         }
-    })
+    });
+    if (count <= 0) {
+        top.showMessage(`已取消选择 "${building} ${room}"`);
+    } else {
+        top.showMessage(`已选中 "${building} ${room}"，共 ${count} 单`)
+    }
 }
 
 
