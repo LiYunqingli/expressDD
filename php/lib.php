@@ -138,8 +138,13 @@ function getCJdetail($pid, $conn)
 }
 
 
-function getTodayCJ($conn){
-    $sql = "SELECT * FROM lottery WHERE time = CURDATE() ORDER BY id DESC LIMIT 1";
+function getTodayCJ($conn, $date = null){
+    if ($date == null){
+        $date = "CURDATE()";
+    }else{
+        $date = "'$date'";
+    }
+    $sql = "SELECT * FROM lottery WHERE time = $date ORDER BY id DESC LIMIT 1";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
