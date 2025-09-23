@@ -534,10 +534,30 @@
             }
         }
     </style>
+    <style>
+        .title {
+            font-size: 1rem;
+            color: #343a40;
+            text-align: left;
+            margin: 5px 0;
+        }
+
+        @media (min-width: 768px) {
+            .title {
+                font-size: 1.2rem;
+                margin: 10px 0;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="container">
+
+        <div class="title">
+            取件码: <span id="pickup-code">123456</span>
+        </div>
+
         <!-- 原有卡片（包含图片、上传信息、中奖状态） -->
         <div class="card">
             <div class="card-body">
@@ -605,6 +625,7 @@
                     <thead>
                         <tr>
                             <th>快递编号</th>
+                            <th>取件码</th>
                             <th>当前状态</th>
                             <th>中奖状态</th>
                             <th>操作</th>
@@ -622,25 +643,6 @@
                             <td><span class="status-tag unreceived">未送达</span></td>
                             <td><span class="lottery-tag" data-status="2"><i class="fas fa-gift"></i> 中奖</span></td>
                             <td><button class="view-btn" onclick="viewExpressDetail('YT20250825001')">查看详情</button></td>
-                        </tr>
-                        <tr>
-                            <td>SF13820250825</td>
-                            <td><span class="status-tag wait-notify">已送达-等待通知</span></td>
-                            <td><span class="lottery-tag" data-status="3"><i class="fas fa-times"></i> 未中奖</span></td>
-                            <td><button class="view-btn" onclick="viewExpressDetail('SF13820250825')">查看详情</button></td>
-                        </tr>
-                        <tr>
-                            <td>ZT88820250825</td>
-                            <td><span class="status-tag notified">已送达-已通知</span></td>
-                            <td><span class="lottery-tag" data-status="4"><i class="fas fa-clock"></i> 等待开奖</span></td>
-                            <td><button class="view-btn" onclick="viewExpressDetail('ZT88820250825')">查看详情</button></td>
-                        </tr>
-                        <tr>
-                            <td>YD66620250825</td>
-                            <td><span class="status-tag unreceived">未送达</span></td>
-                            <td><span class="lottery-tag" data-status="1"><i class="fas fa-info"></i> 今日没有抽奖活动</span>
-                            </td>
-                            <td><button class="view-btn" onclick="viewExpressDetail('YD66620250825')">查看详情</button></td>
                         </tr> -->
                     </tbody>
                 </table>
@@ -834,6 +836,7 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${item.expressNo}</td>
+                    <td>${item.pickupCode}</td>
                     <td><span class="status-tag ${deliveryStatus.class}">${deliveryStatus.text}</span></td>
                     <td>
                         <span class="lottery-tag" data-status="${lotteryStatus.status}">
