@@ -555,7 +555,7 @@
     <div class="container">
 
         <div class="title">
-            取件码: <span id="pickup-code">123456</span>
+            取件码: <span id="pickup-code">xx-xx-xxxxx</span>
         </div>
 
         <!-- 原有卡片（包含图片、上传信息、中奖状态） -->
@@ -680,6 +680,8 @@
                     top.showMessage("分享链接已失效", 1000000, "red");
                     return;
                 }
+                // 更新取件码显示
+                getPickupCode(pid);
                 let xhr = new XMLHttpRequest();
                 xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + pid, true);
                 xhr.onreadystatechange = function () {
@@ -736,7 +738,7 @@
                 modal.classList.add('show');
                 document.body.style.overflow = 'hidden';
                 // 移动端禁止缩放
-                document.documentElement.style.touchAction = 'none';
+                // document.documentElement.style.touchAction = 'none';
             });
 
             closeModal.addEventListener('click', closeModalHandler);
@@ -868,6 +870,27 @@
         function openExpressDetailModal(expressNo) {
             // 移动端优化：使用底部滑出弹窗，而非全屏模态框
             // 此处可添加底部弹窗的创建和渲染逻辑
+        }
+
+        function getPickupCode(pid){
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", $HOST + "/getPickupCode.php?pid=" + pid, true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        let result = JSON.parse(xhr.responseText);
+                        if (result.code === 200) {
+                            document.getElementById('pickup-code').textContent = result.pickupCode;
+                        } else {
+                            top.showMessage("获取取件码失败", 5000, "red");
+                        }
+                    } else {
+                        top.showMessage("网络请求失败，请刷新重试", 5000, "red");
+                    }
+                }
+            };
+            xhr.send();
         }
     </script>
     <script src="../js/showMessage.js"></script>
