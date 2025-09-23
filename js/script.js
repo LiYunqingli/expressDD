@@ -1183,6 +1183,7 @@ function statusClick(status, id) {
                         let imgURL = $HOST + "/uploads/" + result.data[0].compressed;
                         top.shareURL = $MAIN + "/detail/share.html?pid=" + encrypt(id);
                         document.getElementById("shareImage").src = imgURL;
+                        document.getElementById("downloadImageLink").href = imgURL;
                         // 打开分享弹窗
                         openShareModal();
                         // 为复制按钮绑定事件（确保只绑定一次）
