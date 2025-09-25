@@ -154,3 +154,15 @@ function getTodayCJ($conn, $date = null){
         return "false";
     }
 }
+
+// 输入快递id，查看当天的日期
+function getJidToDate($jid, $conn){
+    // $sql = "SELECT * FROM `data` WHERE id = '$jid' AND `time` = CURDATE()";
+    $sql = "SELECT time FROM `data` WHERE id = '$jid' ORDER BY time DESC LIMIT 1"; // 查询这个快递id是哪一天的
+    $result = $conn->query($sql);
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc();
+    } else {
+        return "false";
+    }
+}
