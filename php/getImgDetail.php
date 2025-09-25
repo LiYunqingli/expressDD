@@ -16,7 +16,8 @@ if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $data[] = $row;
     }
-    $todayCjDetail = getTodayCJ($conn);
+    $idToDate = getJidToDate($pid, $conn);
+    $todayCjDetail = getTodayCJ($conn, $idToDate['time']);
     if ($todayCjDetail != "false") {
         // $todayCjDetail = json_decode($todayCjDetail, true);
         $y_n = $todayCjDetail['y_n'];
