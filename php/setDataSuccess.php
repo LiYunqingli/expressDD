@@ -28,7 +28,7 @@ if (checkParm($token) && checkParm($clickOKisAll)) {
         if ($isAll) {
             // 如果clickOKisAll为true，将所有待分享的订单状态改为已完成
             // 先查询符合条件的building_users_id
-            $sqlSelect = "SELECT building_users_id FROM `data` WHERE `id` = ?";
+            $sqlSelect = "SELECT building_users_id, `time` FROM `data` WHERE `id` = ?";
             $stmtSelect = $conn->prepare($sqlSelect);
 
             if ($stmtSelect === false) {
@@ -56,10 +56,11 @@ if (checkParm($token) && checkParm($clickOKisAll)) {
 
             $row = $resultSelect->fetch_assoc();
             $buildingUsersId = $row['building_users_id'];
+            $time = $row['time'];
             $stmtSelect->close();
 
             // 更新当天所有待分享状态的订单
-            $sqlUpdate = "UPDATE `data` SET `status` = '已完成' WHERE `building_users_id` = ? AND `time` = CURDATE() AND `status` = '待分享'";
+            $sqlUpdate = "UPDATE `data` SET `status` = '已完成' WHERE `building_users_id` = ? AND `time` = '$time' AND `status` = '待分享'";
             $stmtUpdate = $conn->prepare($sqlUpdate);
 
             if ($stmtUpdate === false) {
