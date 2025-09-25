@@ -128,6 +128,7 @@
             background: #f8f9fa;
             border-radius: 10px;
             flex-direction: row;
+            height: 70px;
         }
 
         .info-item i {
@@ -581,11 +582,31 @@
                     <div class="info-item lottery-status" data-status="2">
                         <i class="fas fa-gift"></i>
                         <div class="info-content">
-                            <h3>快递中奖状态</h3>
+                            <h3 id="lottery-status-tit">快递中奖状态</h3>
                             <p id="lottery-status">中奖</p>
+                            <span id="lottery-status-name" style="display: none;font-size: 0.85rem;">
+                                价值两元的代金券
+                            </span>
                         </div>
                     </div>
+                    <script>
+                        function autoUpdateLotteryStatusText(p) {
+                            if (p) {
+                                document.getElementById("lottery-status").style.display = "block";
+                                document.getElementById("lottery-status-name").style.display = "none";
+                                document.getElementById("lottery-status-tit").innerText = "快递中奖状态";
+                                // 匿名函数包裹，延迟后才执行autoUpdateLotteryStatusText(false)
+                                setTimeout(() => autoUpdateLotteryStatusText(false), 3000);
+                            } else {
+                                document.getElementById("lottery-status").style.display = "none";
+                                document.getElementById("lottery-status-tit").innerText = "今日活动";
+                                document.getElementById("lottery-status-name").style.display = "block";
+                                // 同样用匿名函数包裹
+                                setTimeout(() => autoUpdateLotteryStatusText(true), 3000);
+                            }
+                        }
 
+                    </script>
                     <div class="info-item">
                         <i class="fas fa-calendar"></i>
                         <div class="info-content">
@@ -703,6 +724,9 @@
                                     4: "等待开奖"
                                 };
                                 lotteryStatusEl.textContent = statusTextMap[lotteryStatus];
+                                if(lotteryStatus != 1){
+                                    getCjName(pid);
+                                }
                                 lotteryStatusCard.setAttribute('data-status', lotteryStatus);
 
                                 // 隐藏加载动画，显示内容
@@ -768,6 +792,23 @@
             // 加载其他快递状态（含中奖状态）
             loadOtherExpressStatus(pid);
         });
+
+        function getCjName(id){
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", $HOST + "/getCjName.php?id=" + id, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code === 200) {
+                        document.getElementById("lottery-status-name").innerText = result.name;
+                        setTimeout(() => {
+                            autoUpdateLotteryStatusText(false); // 启动自动切换
+                        },1000);
+                    }
+                }
+            };
+            xhr.send();
+        }
 
         /**
          * 加载其他快递状态（含中奖状态，后期对接API）
@@ -874,7 +915,7 @@
             // 此处可添加底部弹窗的创建和渲染逻辑
         }
 
-        function getPickupCode(pid){
+        function getPickupCode(pid) {
             let xhr = new XMLHttpRequest();
             xhr.open("GET", $HOST + "/getPickupCode.php?pid=" + pid, true);
             xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
