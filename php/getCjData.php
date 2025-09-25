@@ -35,7 +35,8 @@ if (checkParm($pid)) {
 
                 // 中奖状态
                 $cjStatus;
-                $todayCjDetail = getTodayCJ($conn);
+                $idToDate = getJidToDate($pid, $conn);
+                $todayCjDetail = getTodayCJ($conn, $idToDate['time']);
                 if ($todayCjDetail != "false") {
                     // $todayCjDetail = json_decode($todayCjDetail, true);
                     $y_n = $todayCjDetail['y_n'];
