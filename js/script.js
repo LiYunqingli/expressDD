@@ -1,5 +1,9 @@
 // 全局的数据
 top.data = []
+
+// 全局的数据最新时间
+top.dataLastUpdateTime = null;
+
 // DOM元素
 const tabs = document.querySelectorAll('.tab');
 const tableBody = document.querySelector('#records-table tbody');
@@ -471,6 +475,9 @@ function loadBuilding() {
 }
 
 function song() {
+
+    top.shaixuanPanduan = false; // 目前是否使用了筛选功能
+
     console.log("song");
     let new_data = top.data; // 假设data是外部传入的原始数据
     console.log(new_data);
@@ -522,6 +529,9 @@ function song() {
 }
 
 function qu() {
+
+    top.shaixuanPanduan = false; // 目前是否使用了筛选功能
+
     console.log("qu");
     let new_data = top.data; // 使用原始数据副本
 
@@ -1285,4 +1295,80 @@ function deleteDataStatus(id) {
         }
     };
     xhr.send(`id=${id}&token=${getToken()}`)
+}
+
+// 检查并且更新本地快递的状态
+function checkAndUpdateLocalStatus(id, newStatus) {
+    let thisElement = document.getElementById("_" + id);
+    // 状态ele
+    let statusElement = thisElement.querySelector(".status");
+    let thisStatus = statusElement.innerText;
+    if (thisStatus !== newStatus) {
+        let oldClass = statusElement.className; // 保存旧的class
+
+        statusElement.classList.remove("status_red", "status_yellow", "status_green");
+        if (newStatus === "未送达") {
+            statusElement.classList.add("status_red");
+        } else if (newStatus === "待分享") {
+            statusElement.classList.add("status_yellow");
+        } else if (newStatus === "已完成") {
+            statusElement.classList.add("status_green");
+        } else {
+            console.log("未知状态：" + newStatus);
+            top.showMessage("从服务器同步数据异常", 3000, "red");
+            // 恢复旧的class
+            statusElement.className = oldClass;
+            return;
+        }
+        // 更新状态文本
+        statusElement.innerText = newStatus;
+        // 更新onclick事件
+        statusElement.setAttribute("onclick", `statusClick('${newStatus}', '${id}')`);
+
+        // 同步更新本地全局数据包的状态
+        updateTopDataSyncData(id, newStatus);
+
+        console.log(`id=${id} 的状态从 ${thisStatus} 更新为 ${newStatus}`);
+    }
+}
+
+// 修改本地全局数据包的某个快递的状态
+function updateTopDataSyncData(id, newStatus) {
+    var count = 0;
+    for (let i = 0; i < top.data.length; i++) {
+        if(top.data[i].id == id){
+            top.data[i].status = newStatus;
+            count++;
+        }
+    }
+    if(count > 0){
+        console.log(`成功更新 ${count} 个快递的状态`);
+    }else{
+        console.log(`未找到 id=${id} 的快递，异常调用`);
+    }
+}
+
+// 同步数据
+function getSyncData() {
+    let xhr = new XMLHttpRequest();
+    xhr.open('GET', $HOST + '/getSyncData.php?' + `type=${dateSelect.value}&datetime=none&token=${getToken()}`, true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+            let result = JSON.parse(xhr.responseText);
+            if(result.code == 200){
+                for(let i = 0; i < result.data.length; i++){
+                    let item = result.data[i];
+                    let id = item.id;
+                    let status = item.status;
+                    console.log("同步数据：id=" + id + ", status=" + status);
+                    checkAndUpdateLocalStatus(id, status);
+                }
+            }else{
+                top.showMessage("从服务器同步数据失败，服务器返回: "  + result.msg, 3000, "red");
+                console.log("从服务器同步数据失败");
+            }
+        }
+    };
+    xhr.send();
 }
