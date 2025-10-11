@@ -2,7 +2,7 @@
 top.data = []
 
 // 全局的数据最新时间
-top.dataLastUpdateTime = null;
+top.dataLastUpdateTime = "none"; // 初次使用none，获取当天的全部数据
 
 // DOM元素
 const tabs = document.querySelectorAll('.tab');
@@ -1351,7 +1351,7 @@ function updateTopDataSyncData(id, newStatus) {
 // 同步数据
 function getSyncData() {
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', $HOST + '/getSyncData.php?' + `type=${dateSelect.value}&datetime=none&token=${getToken()}`, true);
+    xhr.open('GET', $HOST + '/getSyncData.php?' + `type=${dateSelect.value}&datetime=${top.dataLastUpdateTime}&token=${getToken()}`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
@@ -1364,11 +1364,38 @@ function getSyncData() {
                     console.log("同步数据：id=" + id + ", status=" + status);
                     checkAndUpdateLocalStatus(id, status);
                 }
-            }else{
+            }else if(result.code == 201){
+                console.log("今日无数据，同步数据返回为空");
+            }
+            else{
                 top.showMessage("从服务器同步数据失败，服务器返回: "  + result.msg, 3000, "red");
                 console.log("从服务器同步数据失败");
             }
         }
     };
     xhr.send();
+}
+
+// 更新最后同步的时间
+function updateSyncLastTime(){
+    top.data;
+    // 获取top.data[i].
+
+    // 此方法暂时弃用，因为无法实时的判断value的变化
+}
+
+// 设置是否为默认同步
+function setDefaultSync(){
+    if(getDefaultSync()){
+        localStorage.setItem("defaultSync", "false");
+        top.showMessage("已关闭默认同步，下次进入生效");
+    }else{
+        localStorage.setItem("defaultSync", "true");
+        top.showMessage("已开启默认同步，下次进入生效");
+    }
+}
+
+// 获取是否为默认同步
+function getDefaultSync() {
+    return localStorage.getItem("defaultSync") === "true";
 }
