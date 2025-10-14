@@ -1336,14 +1336,14 @@ function checkAndUpdateLocalStatus(id, newStatus) {
 function updateTopDataSyncData(id, newStatus) {
     var count = 0;
     for (let i = 0; i < top.data.length; i++) {
-        if(top.data[i].id == id){
+        if (top.data[i].id == id) {
             top.data[i].status = newStatus;
             count++;
         }
     }
-    if(count > 0){
+    if (count > 0) {
         console.log(`成功更新 ${count} 个快递的状态`);
-    }else{
+    } else {
         console.log(`未找到 id=${id} 的快递，异常调用`);
     }
 }
@@ -1356,19 +1356,19 @@ function getSyncData() {
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
             let result = JSON.parse(xhr.responseText);
-            if(result.code == 200){
-                for(let i = 0; i < result.data.length; i++){
+            if (result.code == 200) {
+                for (let i = 0; i < result.data.length; i++) {
                     let item = result.data[i];
                     let id = item.id;
                     let status = item.status;
                     console.log("同步数据：id=" + id + ", status=" + status);
                     checkAndUpdateLocalStatus(id, status);
                 }
-            }else if(result.code == 201){
+            } else if (result.code == 201) {
                 console.log("今日无数据，同步数据返回为空");
             }
-            else{
-                top.showMessage("从服务器同步数据失败，服务器返回: "  + result.msg, 3000, "red");
+            else {
+                top.showMessage("从服务器同步数据失败，服务器返回: " + result.msg, 3000, "red");
                 console.log("从服务器同步数据失败");
             }
         }
@@ -1377,7 +1377,7 @@ function getSyncData() {
 }
 
 // 更新最后同步的时间
-function updateSyncLastTime(){
+function updateSyncLastTime() {
     top.data;
     // 获取top.data[i].
 
@@ -1385,11 +1385,11 @@ function updateSyncLastTime(){
 }
 
 // 设置是否为默认同步
-function setDefaultSync(){
-    if(getDefaultSync()){
+function setDefaultSync() {
+    if (getDefaultSync()) {
         localStorage.setItem("defaultSync", "false");
         top.showMessage("已关闭默认同步，下次进入生效");
-    }else{
+    } else {
         localStorage.setItem("defaultSync", "true");
         top.showMessage("已开启默认同步，下次进入生效");
     }
@@ -1399,3 +1399,79 @@ function setDefaultSync(){
 function getDefaultSync() {
     return localStorage.getItem("defaultSync") === "true";
 }
+
+// 自动隐藏状态为"已完成"的快递
+
+function augoSetHideSuccess() {
+    const table_elements = document.querySelectorAll("#records-table tbody tr");
+    // console.log(table_elements);
+    let count_num = 0;
+    let table_elements_length = table_elements.length;
+    for (let i = 0; i < table_elements_length; i++) {
+        let now_element = table_elements[i];
+        if (now_element.style.display == "none") {
+            continue;
+        }
+
+        // console.log(now_element);
+        let first_td_secend_span = now_element.querySelector("td:nth-child(1) span:nth-child(2)");
+        if (first_td_secend_span.innerText == "已完成") {
+            now_element.style.display = "none";
+            count_num++;
+        } else {
+
+        }
+    }
+    if (count_num > 0) {
+
+        top.showMessage("已自动隐藏 " + count_num + " 个已完成的快递");
+    }
+
+
+}
+
+// 一秒钟更新一次
+
+// setInterval(augoSetHideSuccess, 1000);
+
+top.autoHideInterval = null; // 自动隐藏的定时器
+
+// 开启自动隐藏功能
+function startAutoHide() {
+    top.autoHideInterval = setInterval(augoSetHideSuccess, 1000);
+    localStorage.setItem("autoHide", "true");
+}
+
+// 关闭自动隐藏功能
+function stopAutoHide() {
+    clearInterval(top.autoHideInterval);
+    localStorage.setItem("autoHide", "false");
+    document.querySelector(".active").click();  // 刷新数据表格
+}
+
+// 按钮点击调用
+function setAutoHide(){
+    let autoHide = localStorage.getItem("autoHide");
+    if(autoHide === "true"){
+        stopAutoHide();
+        document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已关闭隐藏';
+        top.showMessage("已关闭自动隐藏已完成快递功能");
+    }else{
+        startAutoHide();
+        document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已开启隐藏';
+        top.showMessage("已开启自动隐藏已完成快递功能");
+    }
+}
+
+function initAutoHide(){
+    let autoHide = localStorage.getItem("autoHide");
+    if(autoHide === "true"){
+        startAutoHide();
+        document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已开启隐藏';
+    }else{
+        stopAutoHide();
+        document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已关闭隐藏';
+    }
+}
+
+initAutoHide();
