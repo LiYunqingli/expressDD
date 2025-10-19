@@ -392,6 +392,10 @@ footer {
     background-color: rgb(138, 132, 65);
 }
 
+.setAutoHideBtn {
+    width: 150px; /* 将状态已完成的快递隐藏 */
+}
+
 @media (max-width: 768px) {
     /* .tabs {
         flex-direction: column;
