@@ -1349,7 +1349,7 @@ function updateTopDataSyncData(id, newStatus) {
 }
 
 // 同步数据(同步的是状态)
-function getSyncData() {
+function getSyncStatusData() {
     let xhr = new XMLHttpRequest();
     xhr.open('GET', $HOST + '/getSyncStatusData.php?' + `type=${dateSelect.value}&datetime=${top.dataLastUpdateTime}&token=${getToken()}`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -1357,11 +1357,12 @@ function getSyncData() {
         if (xhr.readyState == 4 && xhr.status == 200) {
             let result = JSON.parse(xhr.responseText);
             if (result.code == 200) {
+                console.log("快递状态数据开始同步");
                 for (let i = 0; i < result.data.length; i++) {
                     let item = result.data[i];
                     let id = item.id;
                     let status = item.status;
-                    console.log("同步数据：id=" + id + ", status=" + status);
+                    // console.log("同步数据：id=" + id + ", status=" + status);
                     checkAndUpdateLocalStatus(id, status);
                 }
             } else if (result.code == 201) {
@@ -1475,3 +1476,19 @@ function initAutoHide(){
 }
 
 initAutoHide();
+
+
+function initGetSyncStatusData() {
+    top.showMessage("已自动开启快递状态同步功能，双击页脚版权信息可关闭", 4000, 'green');
+    if(getDefaultSync()){
+        setInterval(getSyncStatusData, 5000);
+    }
+}
+
+//初始化自动同步快递状态
+initGetSyncStatusData();
+
+// 新快递的数据同步
+function getSyncData(){
+
+}
