@@ -1348,10 +1348,10 @@ function updateTopDataSyncData(id, newStatus) {
     }
 }
 
-// 同步数据
+// 同步数据(同步的是状态)
 function getSyncData() {
     let xhr = new XMLHttpRequest();
-    xhr.open('GET', $HOST + '/getSyncData.php?' + `type=${dateSelect.value}&datetime=${top.dataLastUpdateTime}&token=${getToken()}`, true);
+    xhr.open('GET', $HOST + '/getSyncStatusData.php?' + `type=${dateSelect.value}&datetime=${top.dataLastUpdateTime}&token=${getToken()}`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && xhr.status == 200) {
