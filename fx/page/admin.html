@@ -1,11 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>按照配送员分析</title>
+    <link rel="stylesheet" href="../../css/message-box.css">
+    <script src="../../js/showMessage.js"></script>
+    <script src="../../js/lib.js"></script>
 </head>
+
 <body>
-    
+    <select name="adminID" id="adminID">
+        <option value="null">没有用户</option>
+
+    </select>
+    </label>
 </body>
+<script>
+    // 获取配送员列表
+    function getAdminList() {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", $HOST + "/getAdminList.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                let result = JSON.parse(xhr.responseText);
+                if (result.code == 200) {
+                    top.showMessage("获取配送员列表成功");
+                    console.log(result.data);
+                    let shuchu = "";
+                    for(let i = 0; i< result.data.length; i++){
+                        shuchu += `<option value="${result.data[i]}">${result.data[i]}</option>\n`;
+                    }
+                    document.getElementById("adminID").innerHTML = shuchu;
+
+                } else {
+                    top.showMessage("获取配送员列表失败：" + result.message, 3000, "red");
+                    top.showMessage("请重新登录！三秒后将回退上一页", 3000, "red");
+                    //返回上一页
+                    setTimeout(function () {
+                        history.back();
+                    }, 3000);
+                }
+            }
+        };
+        xhr.send("token=" + getToken());
+    }
+
+    // 初始化页面
+    function init() {
+        getAdminList();
+        
+        document.getElementById("adminID").onchange = function () {
+            let adminID = document.getElementById("adminID").value;
+            if (adminID === "null") {
+                return;
+            }
+            top.showMessage("选择了配送员：" + adminID);
+        };
+    }
+
+    window.onload = function () {
+        init();
+    };
+</script>
+
+
 </html>
