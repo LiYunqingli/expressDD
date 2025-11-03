@@ -1,70 +1,405 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>按照配送员分析</title>
     <link rel="stylesheet" href="../../css/message-box.css">
+    <!-- 引入Chart.js用于图表绘制 -->
+    <script src="../../js/chart.js"></script>
     <script src="../../js/showMessage.js"></script>
     <script src="../../js/lib.js"></script>
+    <style>
+        /* 页面布局样式 */
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+        }
+        .select-box {
+            margin-bottom: 30px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        #adminID {
+            padding: 8px 12px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .chart-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .chart-card h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table th {
+            background: #f8f8f8;
+            font-weight: 600;
+            color: #555;
+        }
+        .data-table tr:hover {
+            background: #fafafa;
+        }
+    </style>
 </head>
-
 <body>
-    <select name="adminID" id="adminID">
-        <option value="null">没有用户</option>
+    <div class="container">
+        <!-- 配送员选择框 -->
+        <div class="select-box">
+            <label for="adminID">选择配送员：</label>
+            <select name="adminID" id="adminID">
+                <option value="null">请选择配送员</option>
+            </select>
+        </div>
 
-    </select>
-    </label>
-</body>
-<script>
-    // 获取配送员列表
-    function getAdminList() {
-        let xhr = new XMLHttpRequest();
-        xhr.open("POST", $HOST + "/getAdminList.php", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                let result = JSON.parse(xhr.responseText);
-                if (result.code == 200) {
-                    top.showMessage("获取配送员列表成功");
-                    console.log(result.data);
-                    let shuchu = "";
-                    for(let i = 0; i< result.data.length; i++){
-                        shuchu += `<option value="${result.data[i]}">${result.data[i]}</option>\n`;
+        <!-- 图表展示区域 -->
+        <div class="chart-group">
+            <!-- 月度配送量图表 -->
+            <div class="chart-card">
+                <h3>月度配送量统计</h3>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+            <!-- 每日配送量图表 -->
+            <div class="chart-card">
+                <h3>每日配送量统计</h3>
+                <canvas id="dailyChart"></canvas>
+            </div>
+            <!-- 楼栋配送量图表 -->
+            <div class="chart-card">
+                <h3>各楼栋配送量占比</h3>
+                <canvas id="buildingChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 详细数据表格 -->
+        <div class="chart-card">
+            <h3>配送明细数据</h3>
+            <table class="data-table" id="detailTable">
+                <thead>
+                    <tr>
+                        <th>订单ID</th>
+                        <th>用户ID</th>
+                        <th>配送时间</th>
+                        <th>楼栋</th>
+                        <th>房间号</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #999;">请选择配送员查看数据</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 全局存储图表实例，避免重复创建
+        let monthlyChartInstance = null;
+        let dailyChartInstance = null;
+        let buildingChartInstance = null;
+
+        // 获取配送员列表
+        function getAdminList() {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", $HOST + "/getAdminList.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        top.showMessage("获取配送员列表成功");
+                        let optionHtml = '<option value="null">请选择配送员</option>';
+                        // 假设result.data返回的是配送员ID数组，如需显示姓名可调整字段
+                        result.data.forEach(adminId => {
+                            optionHtml += `<option value="${adminId}">配送员${adminId}</option>`;
+                        });
+                        document.getElementById("adminID").innerHTML = optionHtml;
+                    } else {
+                        top.showMessage("获取配送员列表失败：" + result.message, 3000, "red");
+                        top.showMessage("请重新登录！三秒后将回退上一页", 3000, "red");
+                        setTimeout(() => history.back(), 3000);
                     }
-                    document.getElementById("adminID").innerHTML = shuchu;
-
-                } else {
-                    top.showMessage("获取配送员列表失败：" + result.message, 3000, "red");
-                    top.showMessage("请重新登录！三秒后将回退上一页", 3000, "red");
-                    //返回上一页
-                    setTimeout(function () {
-                        history.back();
-                    }, 3000);
                 }
-            }
-        };
-        xhr.send("token=" + getToken());
-    }
+            };
+            xhr.send("token=" + getToken());
+        }
 
-    // 初始化页面
-    function init() {
-        getAdminList();
-        
-        document.getElementById("adminID").onchange = function () {
-            let adminID = document.getElementById("adminID").value;
-            if (adminID === "null") {
+        // 处理配送员数据：统计月度、每日、楼栋数据
+        function processAdminData(data) {
+            // 1. 月度数据统计（格式：2025-09）
+            const monthlyData = {};
+            // 2. 每日数据统计（格式：2025-09-27）
+            const dailyData = {};
+            // 3. 楼栋数据统计
+            const buildingData = {};
+
+            data.forEach(item => {
+                // 月度统计
+                const month = item.time.slice(0, 7);
+                monthlyData[month] = (monthlyData[month] || 0) + 1;
+
+                // 每日统计
+                const day = item.time;
+                dailyData[day] = (dailyData[day] || 0) + 1;
+
+                // 楼栋统计
+                const building = item.building;
+                buildingData[building] = (buildingData[building] || 0) + 1;
+            });
+
+            // 转换为图表所需格式（排序）
+            const sortedMonths = Object.keys(monthlyData).sort();
+            const sortedDays = Object.keys(dailyData).sort();
+            const buildingLabels = Object.keys(buildingData);
+
+            return {
+                monthly: {
+                    labels: sortedMonths,
+                    values: sortedMonths.map(month => monthlyData[month])
+                },
+                daily: {
+                    labels: sortedDays,
+                    values: sortedDays.map(day => dailyData[day])
+                },
+                building: {
+                    labels: buildingLabels,
+                    values: buildingLabels.map(building => buildingData[building])
+                },
+                rawData: data // 原始明细数据
+            };
+        }
+
+        // 绘制月度配送量图表
+        function renderMonthlyChart(monthlyData) {
+            const ctx = document.getElementById("monthlyChart").getContext("2d");
+            // 销毁旧图表
+            if (monthlyChartInstance) monthlyChartInstance.destroy();
+            
+            monthlyChartInstance = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: monthlyData.labels,
+                    datasets: [{
+                        label: "配送订单数",
+                        data: monthlyData.values,
+                        backgroundColor: "rgba(54, 162, 235, 0.6)",
+                        borderColor: "rgba(54, 162, 235, 1)",
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "订单数量" }
+                        },
+                        x: {
+                            title: { display: true, text: "月份（年-月）" }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `订单数：${context.raw}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 绘制每日配送量图表
+        function renderDailyChart(dailyData) {
+            const ctx = document.getElementById("dailyChart").getContext("2d");
+            if (dailyChartInstance) dailyChartInstance.destroy();
+            
+            dailyChartInstance = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: dailyData.labels,
+                    datasets: [{
+                        label: "每日配送订单数",
+                        data: dailyData.values,
+                        fill: false,
+                        borderColor: "rgba(255, 99, 132, 1)",
+                        tension: 0.1,
+                        pointBackgroundColor: "rgba(255, 99, 132, 1)"
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "订单数量" }
+                        },
+                        x: {
+                            title: { display: true, text: "日期（年-月-日）" },
+                            ticks: { maxRotation: 45, minRotation: 45 } // 旋转标签避免重叠
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `订单数：${context.raw}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 绘制楼栋配送量占比图表
+        function renderBuildingChart(buildingData) {
+            const ctx = document.getElementById("buildingChart").getContext("2d");
+            if (buildingChartInstance) buildingChartInstance.destroy();
+            
+            // 生成随机颜色（区分不同楼栋）
+            const colors = buildingData.labels.map(() => 
+                `rgba(${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, ${Math.floor(Math.random()*200)}, 0.7)`
+            );
+
+            buildingChartInstance = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: buildingData.labels,
+                    datasets: [{
+                        data: buildingData.values,
+                        backgroundColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: "right",
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((context.raw / total) * 100);
+                                    return `${context.label}：${context.raw}单（${percentage}%）`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 渲染详细数据表格
+        function renderDetailTable(rawData) {
+            const tableBody = document.getElementById("detailTable").querySelector("tbody");
+            if (rawData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">该配送员暂无配送数据</td></tr>';
                 return;
             }
-            top.showMessage("选择了配送员：" + adminID);
-        };
-    }
 
-    window.onload = function () {
-        init();
-    };
-</script>
+            let tableHtml = "";
+            rawData.forEach(item => {
+                tableHtml += `
+                    <tr>
+                        <td>${item.id}</td>
+                        <td>${item.building_users_id}</td>
+                        <td>${item.time}</td>
+                        <td>${item.building}</td>
+                        <td>${item.room}</td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = tableHtml;
+        }
 
+        // 获取配送员详细数据
+        function getAdminData(adminID) {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", $HOST + "/getAdminData.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    let result = JSON.parse(xhr.responseText);
+                    if (result.code == 200) {
+                        top.showMessage("获取配送员数据成功");
+                        // 处理数据
+                        const processedData = processAdminData(result.data);
+                        // 渲染图表和表格
+                        renderMonthlyChart(processedData.monthly);
+                        renderDailyChart(processedData.daily);
+                        renderBuildingChart(processedData.building);
+                        renderDetailTable(processedData.rawData);
+                    } else {
+                        top.showMessage("获取配送员数据失败：" + result.message, 3000, "red");
+                        // 清空图表和表格
+                        if (monthlyChartInstance) monthlyChartInstance.destroy();
+                        if (dailyChartInstance) dailyChartInstance.destroy();
+                        if (buildingChartInstance) buildingChartInstance.destroy();
+                        renderDetailTable([]);
+                    }
+                }
+            };
+            xhr.send("token=" + getToken() + "&adminID=" + adminID);
+        }
 
+        // 初始化页面
+        function init() {
+            getAdminList();
+            // 监听配送员选择变化
+            document.getElementById("adminID").onchange = function () {
+                const adminID = this.value;
+                if (adminID === "null") {
+                    // 清空图表和表格
+                    if (monthlyChartInstance) monthlyChartInstance.destroy();
+                    if (dailyChartInstance) dailyChartInstance.destroy();
+                    if (buildingChartInstance) buildingChartInstance.destroy();
+                    renderDetailTable([]);
+                    return;
+                }
+                top.showMessage("选择了配送员：" + adminID);
+                getAdminData(adminID);
+            };
+        }
+
+        window.onload = init;
+    </script>
+</body>
 </html>
