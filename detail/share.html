@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../css/message-box.css">
     <link rel="stylesheet" href="./css/all.min.css">
     <script src="../js/numberEncryptor.js"></script>
+    <script src="../js/log.js"></script>
     <style>
         * {
             margin: 0;
@@ -23,9 +24,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            /* 顶部对齐，避免内容溢出 */
             padding: 15px;
-            /* 移动端减小内边距 */
         }
 
         .container {
@@ -35,31 +34,25 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            /* 板块间距适配移动端 */
         }
 
-        /* 卡片基础样式（PC+移动端通用） */
         .card {
             background: white;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
-            /* 移动端减小阴影强度 */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .card:hover {
             transform: translateY(-3px);
-            /* 移动端弱化悬浮效果 */
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
         }
 
         .card-body {
             padding: 20px;
-            /* 移动端减小内边距 */
         }
 
-        /* 图片容器样式 */
         .image-container {
             position: relative;
             border-radius: 12px;
@@ -67,7 +60,6 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
             margin-bottom: 15px;
-            /* 与其他元素间距适配 */
         }
 
         .image-container img {
@@ -79,7 +71,6 @@
 
         .image-container:hover img {
             transform: scale(1.02);
-            /* 移动端弱化缩放效果 */
         }
 
         .image-overlay {
@@ -89,7 +80,6 @@
             right: 0;
             background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
             padding: 15px;
-            /* 移动端减小内边距 */
             color: white;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -103,28 +93,23 @@
             display: flex;
             justify-content: space-between;
             font-size: 0.9rem;
-            /* 移动端减小字体 */
         }
 
         .overlay-text i {
             margin-right: 5px;
         }
 
-        /* 图片信息卡片组（响应式网格） */
         .image-info {
             margin-bottom: 20px;
             display: grid;
-            /* 移动端1列，平板2列，PC4列 */
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
-            /* 移动端减小间距 */
         }
 
         .info-item {
             display: flex;
             align-items: center;
             padding: 12px;
-            /* 移动端减小内边距 */
             background: #f8f9fa;
             border-radius: 10px;
             flex-direction: row;
@@ -133,54 +118,44 @@
 
         .info-item i {
             font-size: 1rem;
-            /* 移动端减小图标 */
             margin-right: 10px;
             color: #6a11cb;
             min-width: 20px;
-            /* 固定图标宽度，避免文字跳动 */
             text-align: center;
         }
 
         .info-content h3 {
             font-size: 0.8rem;
-            /* 移动端减小标题字体 */
             color: #6c757d;
             margin-bottom: 3px;
         }
 
         .info-content p {
             font-size: 0.95rem;
-            /* 移动端减小内容字体 */
             color: #343a40;
             font-weight: 500;
         }
 
-        /* 快递中奖状态通用样式（单个卡片+表格列共用） */
         .lottery-status {
             --status-color: #6a11cb;
-            /* 默认颜色 */
         }
 
         .lottery-status[data-status="1"] {
             --status-color: #6c757d;
         }
 
-        /* 无活动-灰色 */
         .lottery-status[data-status="2"] {
             --status-color: #28a745;
         }
 
-        /* 中奖-绿色 */
         .lottery-status[data-status="3"] {
             --status-color: #dc3545;
         }
 
-        /* 未中奖-红色 */
         .lottery-status[data-status="4"] {
             --status-color: #ffc107;
         }
 
-        /* 等待开奖-黄色 */
         .lottery-status i {
             color: var(--status-color) !important;
         }
@@ -190,18 +165,15 @@
             font-weight: 600;
         }
 
-        /* 其他快递状态板块样式 */
         .other-express {
             background: white;
             border-radius: 16px;
             padding: 20px;
-            /* 移动端减小内边距 */
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
         }
 
         .section-title {
             font-size: 1.1rem;
-            /* 移动端减小标题字体 */
             color: #343a40;
             margin-bottom: 15px;
             display: flex;
@@ -209,30 +181,22 @@
             gap: 8px;
             padding-bottom: 8px;
             border-bottom: 1px solid #f1f3f5;
-            /* 增加分割线，提升可读性 */
         }
 
         .section-title i {
             color: #6a11cb;
             font-size: 1.2rem;
-            /* 图标略大于文字，突出标题 */
         }
 
-        /* 表格容器（核心适配：移动端横向滚动） */
         .express-table-container {
             overflow-x: auto;
-            /* 强制横向滚动 */
             -webkit-overflow-scrolling: touch;
-            /* 移动端顺滑滚动 */
             padding-bottom: 8px;
-            /* 滚动条预留空间 */
         }
 
-        /* 表格样式（PC+移动端适配） */
         .express-table {
             width: 100%;
             min-width: 400px;
-            /* 确保表格在小屏幕下有足够宽度滚动 */
             border-collapse: separate;
             border-spacing: 0;
             border-radius: 10px;
@@ -243,37 +207,27 @@
         .express-table th {
             background: #f8f9fa;
             padding: 12px 10px;
-            /* 移动端减小内边距 */
             text-align: left;
             font-size: 0.85rem;
-            /* 移动端减小表头字体 */
             color: #6c757d;
             font-weight: 600;
             white-space: nowrap;
-            /* 表头文字不换行 */
         }
 
         .express-table td {
             padding: 12px 10px;
-            /* 移动端减小内边距 */
             border-top: 1px solid #f1f3f5;
             font-size: 0.85rem;
-            /* 移动端减小表格内容字体 */
             color: #343a40;
             vertical-align: middle;
-            /* 内容垂直居中 */
-            /* 不换行 */
             white-space: nowrap;
         }
 
-        /* 快递状态标签样式 */
         .status-tag {
             display: inline-block;
             padding: 3px 8px;
-            /* 移动端减小标签内边距 */
             border-radius: 20px;
             font-size: 0.75rem;
-            /* 移动端减小标签字体 */
             font-weight: 500;
         }
 
@@ -282,67 +236,51 @@
             color: #495057;
         }
 
-        /* 未送达 */
         .status-tag.wait-notify {
             background: #fff3cd;
             color: #856404;
         }
 
-        /* 已送达-等待通知 */
         .status-tag.notified {
             background: #d4edda;
             color: #155724;
         }
-
-        /* 已送达-已通知 */
-
-        /* 表格中中奖状态标签样式 */
+        
         .lottery-tag {
             display: inline-flex;
             align-items: center;
             gap: 4px;
-            /* 移动端减小图标与文字间距 */
             padding: 3px 8px;
-            /* 移动端减小标签内边距 */
             border-radius: 20px;
             font-size: 0.75rem;
-            /* 移动端减小标签字体 */
             font-weight: 500;
             color: white !important;
             white-space: nowrap;
-            /* 标签内容不换行 */
         }
 
         .lottery-tag[data-status="1"] {
             background: #6c757d;
         }
 
-        /* 无活动-灰色 */
         .lottery-tag[data-status="2"] {
             background: #28a745;
         }
 
-        /* 中奖-绿色 */
         .lottery-tag[data-status="3"] {
             background: #dc3545;
         }
 
-        /* 未中奖-红色 */
         .lottery-tag[data-status="4"] {
             background: #ffc107;
             color: #343a40 !important;
         }
 
-        /* 等待开奖-黄色（深色文字） */
         .lottery-tag i {
             font-size: 0.8rem;
-            /* 移动端减小图标 */
         }
 
-        /* 查看按钮样式（适配移动端触摸） */
         .view-btn {
             padding: 5px 10px;
-            /* 移动端调整按钮大小 */
             background: #6a11cb;
             color: white;
             border: none;
@@ -350,9 +288,7 @@
             cursor: pointer;
             transition: background 0.3s ease;
             font-size: 0.8rem;
-            /* 移动端减小按钮字体 */
             min-width: 60px;
-            /* 固定按钮最小宽度，避免变形 */
             text-align: center;
         }
 
@@ -362,20 +298,16 @@
 
         .view-btn:active {
             background: #4a0dbc;
-            /* 移动端增加按压反馈 */
         }
 
-        /* 加载动画样式（适配不同屏幕） */
         .loader {
             display: flex;
             justify-content: center;
             margin: 30px 0;
-            /* 移动端减小边距 */
         }
 
         .loader-circle {
             width: 40px;
-            /* 移动端减小加载动画 */
             height: 40px;
             border: 4px solid #f3f3f3;
             border-top: 4px solid #6a11cb;
@@ -393,7 +325,6 @@
             }
         }
 
-        /* 模态框样式（全屏适配） */
         .modal {
             display: none;
             position: fixed;
@@ -403,13 +334,11 @@
             height: 100vh;
             background: rgba(0, 0, 0, 0.9);
             z-index: 9999;
-            /* 确保模态框在最上层 */
             justify-content: center;
             align-items: center;
             opacity: 0;
             transition: opacity 0.3s ease;
             padding: 15px;
-            /* 移动端预留边距 */
         }
 
         .modal.show {
@@ -420,14 +349,12 @@
         .modal-content {
             max-width: 100%;
             max-height: 90vh;
-            /* 模态框最大高度，避免超出屏幕 */
             position: relative;
         }
 
         .modal-content img {
             max-width: 100%;
             max-height: 80vh;
-            /* 图片最大高度，适配移动端 */
             border-radius: 8px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
@@ -438,7 +365,6 @@
             right: 0;
             color: white;
             font-size: 1.8rem;
-            /* 移动端调整关闭按钮大小 */
             cursor: pointer;
             transition: color 0.3s ease;
             z-index: 10;
@@ -448,7 +374,6 @@
             color: #2575fc;
         }
 
-        /* 媒体查询：精细化适配（平板+大屏手机） */
         @media (min-width: 768px) {
             body {
                 padding: 20px;
@@ -520,7 +445,6 @@
             }
         }
 
-        /* 媒体查询：PC端优化 */
         @media (min-width: 1024px) {
             .card:hover {
                 transform: translateY(-5px);
@@ -533,11 +457,9 @@
 
             .express-table {
                 min-width: 800px;
-                /* PC端表格最小宽度，避免过宽 */
             }
         }
-    </style>
-    <style>
+
         .title {
             font-size: 1rem;
             color: #343a40;
