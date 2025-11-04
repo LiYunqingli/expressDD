@@ -15,7 +15,7 @@ if(checkParm($_POST['url']) && checkParm($_POST['detail'])){
     $ua = $_SERVER['HTTP_USER_AGENT'];
 
     $sql = "INSERT INTO `logs` (`url`, `detail`, `ip`, `ua`, `time`) VALUES (?, ?, ?, ?, NOW())";
-    $stmt = $db->prepare($sql);
+    $stmt = $conn->prepare($sql);
     $stmt->bind_param("ssss", $url, $detail, $ip, $ua);
     $res = $stmt->execute();
 
