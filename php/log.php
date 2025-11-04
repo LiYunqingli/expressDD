@@ -8,20 +8,15 @@
 include 'db.php';
 include 'lib.php';
 
-
-
 if(checkParm($_POST['url']) && checkParm($_POST['detail'])){
     $url = $_POST['url'];
     $detail = $_POST['detail'];
-    // $$$$$
-    // 获取客户端的ip地址，此方法无效，需要支持（可以反向代理实现？？？）
     $ip = getClientIp();
     $ua = $_SERVER['HTTP_USER_AGENT'];
-    $time = date("Y-m-d H:i:s");
 
-    $sql = "INSERT INTO `logs` (`url`, `detail`, `ip`, `ua`, `time`) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO `logs` (`url`, `detail`, `ip`, `ua`, `time`) VALUES (?, ?, ?, ?, NOW())";
     $stmt = $db->prepare($sql);
-    $stmt->bind_param("sssss", $url, $detail, $ip, $ua, $time);
+    $stmt->bind_param("ssss", $url, $detail, $ip, $ua);
     $res = $stmt->execute();
 
     if($res){
