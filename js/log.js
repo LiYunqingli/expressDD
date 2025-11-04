@@ -11,7 +11,7 @@ top.pushLog = function (url, detail) {
     console.log("触发日志记录");
 
     let xhr = new XMLHttpRequest();
-    xhr.open("POST", $HOST + "/log", true);
+    xhr.open("POST", $HOST + "/log.php", true);
     // 表单数据
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     // 不接收数据返回，不考虑是否记录成功
