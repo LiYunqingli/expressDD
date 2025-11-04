@@ -138,10 +138,11 @@ function getCJdetail($pid, $conn)
 }
 
 
-function getTodayCJ($conn, $date = null){
-    if ($date == null){
+function getTodayCJ($conn, $date = null)
+{
+    if ($date == null) {
         $date = "CURDATE()";
-    }else{
+    } else {
         $date = "'$date'";
     }
     $sql = "SELECT * FROM lottery WHERE time = $date ORDER BY id DESC LIMIT 1";
@@ -156,7 +157,8 @@ function getTodayCJ($conn, $date = null){
 }
 
 // 输入快递id，查看当天的日期
-function getJidToDate($jid, $conn){
+function getJidToDate($jid, $conn)
+{
     // $sql = "SELECT * FROM `data` WHERE id = '$jid' AND `time` = CURDATE()";
     $sql = "SELECT time FROM `data` WHERE id = '$jid' ORDER BY time DESC LIMIT 1"; // 查询这个快递id是哪一天的
     $result = $conn->query($sql);
@@ -164,5 +166,17 @@ function getJidToDate($jid, $conn){
         return $result->fetch_assoc();
     } else {
         return "false";
+    }
+}
+
+// 获取请求客户端的IP地址
+function getClientIP()
+{
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+        return $_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return $_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+        return $_SERVER['REMOTE_ADDR'];
     }
 }
