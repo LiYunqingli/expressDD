@@ -857,6 +857,9 @@
             };
             xhr.send();
         }
+
+        // 记录页面访问日志
+        top.pushLog(getFullUrl(), "showDetail");
     </script>
     <script src="../js/showMessage.js"></script>
 </body>
