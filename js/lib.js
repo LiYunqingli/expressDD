@@ -140,3 +140,14 @@ function removeAllUrlParams(replace = true) {
 
     console.log('已移除所有URL参数:', newUrl);
 }
+
+// 获取完整url（去除服务器地址部分，保留路径和参数）
+function getFullUrl() {
+    const url = window.location.href;
+    const mainUrl = $MAIN;
+    if (url.startsWith(mainUrl)) {
+        return url.substring(mainUrl.length);
+    } else {
+        return url; // 如果不匹配主机地址，则返回完整URL
+    }
+}
