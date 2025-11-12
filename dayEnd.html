@@ -1,27 +1,775 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>每日结算</title>
     <link rel="stylesheet" href="./css/message-box.css">
     <script src="./js/showMessage.js"></script>
     <script src="./js/lib.js"></script>
+    <style>
+        /* 全局样式重置与基础设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            padding: 1rem;
+        }
+
+        /* 响应式容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            padding: 1.5rem;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.2rem;
+            border-bottom: 2px solid #eaecef;
+            padding-bottom: 0.6rem;
+            font-size: 1.5rem;
+        }
+
+        /* 日期选择器样式 */
+        .date-selector {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #eaecef;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .date-selector label {
+            color: #495057;
+            font-weight: 500;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .date-selector input {
+            padding: 6px 10px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .date-selector input:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+
+        /* 折叠菜单核心样式 */
+        .building-group {
+            margin-bottom: 0.8rem;
+            border: 1px solid #eaecef;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .building-group:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 一级分类：栋 */
+        .building-header {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: #495057;
+            transition: background-color 0.2s ease;
+            user-select: none;
+        }
+
+        .building-header:hover {
+            background-color: #f1f3f5;
+        }
+
+        .building-title {
+            font-size: 1rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        /* 数量显示 */
+        .count-badge {
+            margin-left: 8px;
+            font-size: 0.8rem;
+            color: #86909c;
+            background-color: #eef1f6;
+            padding: 1px 6px;
+            border-radius: 12px;
+        }
+
+        /* 折叠状态图标 */
+        .toggle-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .building-header.expanded .toggle-icon {
+            background-color: #409eff;
+            color: #fff;
+            transform: rotate(45deg);
+        }
+
+        /* 二级分类：宿舍号 */
+        .dorm-list {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease-in-out;
+        }
+
+        .building-header.expanded+.dorm-list {
+            height: auto;
+        }
+
+        .dorm-item {
+            padding: 12px 15px;
+            border-top: 1px solid #eaecef;
+            transition: background-color 0.15s ease;
+        }
+
+        .dorm-item:hover {
+            background-color: #fafbfc;
+        }
+
+        .dorm-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* 三级分类：微信用户 */
+        .wechat-list {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease-in-out;
+        }
+
+        .dorm-title.expanded+.wechat-list {
+            height: auto;
+        }
+
+        .wechat-item {
+            padding: 10px 15px 10px 30px;
+            border-top: 1px dashed #eaecef;
+            transition: background-color 0.15s ease;
+        }
+
+        .wechat-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .wechat-title {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* 四级：快递数据 */
+        .express-list {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease-in-out;
+        }
+
+        .wechat-title.expanded+.express-list {
+            height: auto;
+        }
+
+        /* 响应式表格 */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .data-table {
+            width: 100%;
+            min-width: 320px;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid #f1f3f5;
+            font-size: 0.85rem;
+        }
+
+        .data-table th {
+            background-color: #fafbfc;
+            font-weight: 600;
+            color: #6c757d;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .data-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-view {
+            background-color: #409eff;
+            color: #fff;
+        }
+
+        .btn-view:hover {
+            background-color: #337ecc;
+        }
+
+        /* 提示信息 */
+        .message {
+            margin: 1rem 0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: none;
+            font-size: 0.9rem;
+            transition: opacity 0.2s ease;
+        }
+
+        .success {
+            background-color: #f0f9eb;
+            color: #67c23a;
+            border: 1px solid #e1f3d8;
+        }
+
+        .error {
+            background-color: #fef0f0;
+            color: #f56c6c;
+            border: 1px solid #fde2e2;
+        }
+
+        /* 空数据提示 */
+        .empty-tip {
+            color: #909399;
+            padding: 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            background-color: #fafbfc;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
+
+        /* 加载中提示 */
+        .loading-tip {
+            color: #6c757d;
+            padding: 20px;
+            text-align: center;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e9ecef;
+            border-top-color: #409eff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* PC端样式（屏幕宽度≥768px） */
+        @media (min-width: 768px) {
+            body {
+                padding: 2rem;
+            }
+
+            .container {
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.8rem;
+            }
+
+            .date-selector {
+                padding: 14px 20px;
+                margin-bottom: 1.5rem;
+            }
+
+            .date-selector label {
+                font-size: 0.95rem;
+            }
+
+            .date-selector input {
+                padding: 7px 12px;
+                font-size: 0.95rem;
+            }
+
+            .building-header {
+                padding: 14px 20px;
+            }
+
+            .building-title {
+                font-size: 1.05rem;
+            }
+
+            .toggle-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 1.2rem;
+            }
+
+            .dorm-item {
+                padding: 15px 20px;
+            }
+
+            .dorm-title {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .wechat-item {
+                padding: 12px 20px 12px 40px;
+            }
+
+            .wechat-title {
+                font-size: 0.95rem;
+                margin-bottom: 10px;
+            }
+
+            .data-table th,
+            .data-table td {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            .btn {
+                padding: 5px 10px;
+                font-size: 0.85rem;
+                margin-bottom: 0;
+            }
+
+            .message {
+                padding: 10px 15px;
+                font-size: 0.95rem;
+            }
+
+            .empty-tip {
+                padding: 20px;
+                font-size: 0.95rem;
+            }
+
+            .loading-tip {
+                padding: 30px;
+                font-size: 1rem;
+            }
+
+            .loading-spinner {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <h1>每日结算</h1>
+    <div class="container">
+        <h1>每日结算</h1>
+        <div class="date-selector">
+            <label for="today">日期：</label>
+            <input type="date" id="today" name="today" />
+        </div>
+        <div class="message" id="message"></div>
+        <!-- 数据容器 -->
+        <div id="dataContainer">
+            <!-- 加载中提示 -->
+            <div class="loading-tip">
+                <div class="loading-spinner"></div>
+                <span>正在加载结算数据...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let data = [];
+
+        // 获取今日数据
+        function getTodayData() {
+            // 显示加载状态
+            const container = document.getElementById('dataContainer');
+            container.innerHTML = `
+                <div class="loading-tip">
+                    <div class="loading-spinner"></div>
+                    <span>正在加载结算数据...</span>
+                </div>
+            `;
+
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", $HOST + "/getData.php?token=" + getToken() + "&type=" + document.getElementById("today").value, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.status === 200 && xhr.readyState === 4) {
+                    try {
+                        let result = JSON.parse(xhr.responseText);
+                        if (result.code == 200) {
+                            top.showMessage("获取今日数据成功");
+                            data = result.data;
+                            renderGroupedData();
+                        } else {
+                            top.showMessage("获取今日数据失败：" + result.msg, 4000, "red");
+                            container.innerHTML = '<div class="empty-tip">暂无结算数据</div>';
+                        }
+                    } catch (e) {
+                        top.showMessage("数据解析错误：" + e.message, 4000, "red");
+                        container.innerHTML = '<div class="empty-tip">数据加载失败，请稍后重试</div>';
+                    }
+                } else if (xhr.readyState === 4) {
+                    top.showMessage("网络错误：" + xhr.status, 4000, "red");
+                    container.innerHTML = '<div class="empty-tip">数据加载失败，请检查网络</div>';
+                }
+            };
+            xhr.send();
+        }
+
+        // 分组数据处理（按楼栋→宿舍→微信ID）
+        function groupData(items) {
+            const buildingGroups = {};
+            
+            items.forEach(item => {
+                // 提取微信ID和名称
+                const [wechatId, wechatName] = item.building_users_id.split(':').map(part => part.trim());
+                const fullWechat = item.building_users_id;
+                
+                // 构建完整信息
+                const fullItem = {
+                    ...item,
+                    wechatId,
+                    wechatName: wechatName || '未知',
+                    fullWechat
+                };
+
+                // 按楼栋分组
+                if (!buildingGroups[item.building]) {
+                    buildingGroups[item.building] = {
+                        name: item.building,
+                        dorms: {},
+                        total: 0
+                    };
+                }
+                buildingGroups[item.building].total++;
+
+                // 按房间分组
+                const roomKey = `${item.building}-${item.room}`;
+                if (!buildingGroups[item.building].dorms[roomKey]) {
+                    buildingGroups[item.building].dorms[roomKey] = {
+                        name: item.room,
+                        fullName: roomKey,
+                        wechats: {},
+                        total: 0
+                    };
+                }
+                buildingGroups[item.building].dorms[roomKey].total++;
+
+                // 按微信ID分组
+                if (!buildingGroups[item.building].dorms[roomKey].wechats[wechatId]) {
+                    buildingGroups[item.building].dorms[roomKey].wechats[wechatId] = {
+                        id: wechatId,
+                        name: fullItem.wechatName,
+                        fullName: fullWechat,
+                        items: [],
+                        total: 0
+                    };
+                }
+
+                // 添加到对应的微信分组
+                buildingGroups[item.building].dorms[roomKey].wechats[wechatId].items.push(fullItem);
+                buildingGroups[item.building].dorms[roomKey].wechats[wechatId].total++;
+            });
+
+            // 排序
+            return Object.keys(buildingGroups).sort((a, b) => a.localeCompare(b)).reduce((sorted, building) => {
+                sorted[building] = buildingGroups[building];
+                // 宿舍号按数字升序
+                sorted[building].dorms = Object.keys(sorted[building].dorms).sort((a, b) => {
+                    const aNum = parseInt(a.split('-')[1]);
+                    const bNum = parseInt(b.split('-')[1]);
+                    return aNum - bNum;
+                }).reduce((dormSorted, dorm) => {
+                    dormSorted[dorm] = sorted[building].dorms[dorm];
+                    return dormSorted;
+                }, {});
+                return sorted;
+            }, {});
+        }
+
+        // 渲染分组数据
+        function renderGroupedData() {
+            const groupedData = groupData(data);
+            const container = document.getElementById('dataContainer');
+            container.innerHTML = '';
+
+            // 空数据提示
+            if (Object.keys(groupedData).length === 0) {
+                container.innerHTML = '<div class="empty-tip">暂无当日结算数据</div>';
+                return;
+            }
+
+            // 遍历楼栋
+            Object.keys(groupedData).forEach(building => {
+                const buildingGroup = document.createElement('div');
+                buildingGroup.className = 'building-group';
+                buildingGroup.dataset.building = building;
+
+                const buildingInfo = groupedData[building];
+
+                // 楼栋头部
+                const buildingHeader = document.createElement('div');
+                buildingHeader.className = 'building-header';
+                buildingHeader.innerHTML = `
+                    <div class="building-title">
+                        ${building} 栋
+                        <span class="count-badge">总计 ${buildingInfo.total} 件</span>
+                    </div>
+                    <div class="toggle-icon">+</div>
+                `;
+
+                // 宿舍列表
+                const dormList = document.createElement('div');
+                dormList.className = 'dorm-list';
+
+                // 遍历宿舍
+                Object.keys(buildingInfo.dorms).forEach(dormKey => {
+                    const dormInfo = buildingInfo.dorms[dormKey];
+                    const dormItem = document.createElement('div');
+                    dormItem.className = 'dorm-item';
+                    dormItem.dataset.dorm = dormKey;
+
+                    // 宿舍标题
+                    const dormTitle = document.createElement('div');
+                    dormTitle.className = 'dorm-title';
+                    dormTitle.innerHTML = `
+                        <div>
+                            宿舍 ${dormInfo.name}
+                            <span class="count-badge">${dormInfo.total} 件</span>
+                        </div>
+                        <div class="toggle-icon">+</div>
+                    `;
+
+                    // 微信用户列表
+                    const wechatList = document.createElement('div');
+                    wechatList.className = 'wechat-list';
+
+                    // 遍历微信用户
+                    Object.keys(dormInfo.wechats).forEach(wechatId => {
+                        const wechatInfo = dormInfo.wechats[wechatId];
+                        const wechatItem = document.createElement('div');
+                        wechatItem.className = 'wechat-item';
+                        wechatItem.dataset.wechat = wechatId;
+
+                        // 微信用户标题
+                        const wechatTitle = document.createElement('div');
+                        wechatTitle.className = 'wechat-title';
+                        wechatTitle.innerHTML = `
+                            <div>
+                                ${wechatInfo.name}
+                                <span class="count-badge">${wechatInfo.total} 件</span>
+                            </div>
+                            <div class="toggle-icon">+</div>
+                        `;
+
+                        // 快递列表
+                        const expressList = document.createElement('div');
+                        expressList.className = 'express-list';
+
+                        // 快递数据表格
+                        const tableContainer = document.createElement('div');
+                        tableContainer.className = 'table-container';
+                        
+                        const dataTable = document.createElement('table');
+                        dataTable.className = 'data-table';
+                        dataTable.innerHTML = `
+                            <thead>
+                                <tr>
+                                    <th>快递ID</th>
+                                    <th>客户ID</th>
+                                    <th>客户名(WeChat)</th>
+                                    <th>楼栋-宿舍</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        `;
+
+                        const tableBody = dataTable.querySelector('tbody');
+                        wechatInfo.items.forEach(item => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${item.id}</td>
+                                <td>${wechatInfo.id}</td>
+                                <td>${wechatInfo.fullName}</td>
+                                <td>${dormInfo.fullName}</td>
+                                <td>
+                                    <button class="btn btn-view" onclick="viewDetails(${item.id})">查看详情</button>
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+
+                        // 组装快递列表
+                        tableContainer.appendChild(dataTable);
+                        expressList.appendChild(tableContainer);
+
+                        // 组装微信用户项
+                        wechatItem.appendChild(wechatTitle);
+                        wechatItem.appendChild(expressList);
+                        wechatList.appendChild(wechatItem);
+                    });
+
+                    // 组装宿舍项
+                    dormItem.appendChild(dormTitle);
+                    dormItem.appendChild(wechatList);
+                    dormList.appendChild(dormItem);
+                });
+
+                // 组装楼栋项
+                buildingGroup.appendChild(buildingHeader);
+                buildingGroup.appendChild(dormList);
+                container.appendChild(buildingGroup);
+            });
+
+            // 添加折叠/展开事件
+            addToggleEvents();
+        }
+
+        // 添加折叠/展开事件
+        function addToggleEvents() {
+            // 楼栋级折叠
+            document.querySelectorAll('.building-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    header.classList.toggle('expanded');
+                    const icon = header.querySelector('.toggle-icon');
+                    icon.textContent = header.classList.contains('expanded') ? '×' : '+';
+                    
+                    // 平滑滚动
+                    if (header.classList.contains('expanded')) {
+                        const dormList = header.nextElementSibling;
+                        if (dormList) {
+                            dormList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }
+                });
+            });
+
+            // 宿舍级折叠
+            document.querySelectorAll('.dorm-title').forEach(title => {
+                title.addEventListener('click', () => {
+                    title.classList.toggle('expanded');
+                    const icon = title.querySelector('.toggle-icon');
+                    icon.textContent = title.classList.contains('expanded') ? '×' : '+';
+                });
+            });
+
+            // 微信用户级折叠
+            document.querySelectorAll('.wechat-title').forEach(title => {
+                title.addEventListener('click', () => {
+                    title.classList.toggle('expanded');
+                    const icon = title.querySelector('.toggle-icon');
+                    icon.textContent = title.classList.contains('expanded') ? '×' : '+';
+                });
+            });
+        }
+
+        // 查看快递详情
+        function viewDetails(id) {
+            const item = data.find(item => item.id == id);
+            if (item) {
+                top.showMessage(`
+                    快递ID: ${item.id}\n
+                    状态: ${item.status}\n
+                    取件码: ${item.pickupCode}\n
+                    备注: ${item.notes || '无'}\n
+                    时间: ${item.insert_time}
+                `, 5000);
+            }
+        }
+
+        // 初始化
+        function init() {
+            // 设置默认日期为今天
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const todayStr = `${year}-${month}-${day}`;
+            document.getElementById("today").value = todayStr;
+
+            // 日期变化时重新加载数据
+            document.getElementById("today").addEventListener('change', getTodayData);
+            
+            getTodayData();
+        }
+
+        window.onload = init;
+    </script>
 </body>
-<script>
 
-    // 获取今日的所有数据
-    function getTodayData(){
-
-    }
-
-    function init(){
-        getTodayData();
-    }
-
-    window.onload = init;
-</script>
 </html>
