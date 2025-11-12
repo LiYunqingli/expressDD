@@ -76,32 +76,33 @@
         /* 折叠菜单核心样式 */
         .building-group {
             margin-bottom: 0.8rem;
-            border: 1px solid #eaecef;
             border-radius: 6px;
             overflow: hidden;
             transition: box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .building-group:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        /* 一级分类：栋 */
+        /* 一级分类：栋 - 深蓝色系 */
         .building-header {
-            background-color: #f8f9fa;
+            background-color: #f0f7ff;
             padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
             font-weight: 600;
-            color: #495057;
+            color: #1866c1;
             transition: background-color 0.2s ease;
             user-select: none;
+            border: 1px solid #d6e4ff;
         }
 
         .building-header:hover {
-            background-color: #f1f3f5;
+            background-color: #e6f0ff;
         }
 
         .building-title {
@@ -115,10 +116,15 @@
         .count-badge {
             margin-left: 8px;
             font-size: 0.8rem;
-            color: #86909c;
-            background-color: #eef1f6;
             padding: 1px 6px;
             border-radius: 12px;
+            font-weight: normal;
+        }
+
+        /* 一级徽章 */
+        .building-title .count-badge {
+            background-color: #d6e4ff;
+            color: #1866c1;
         }
 
         /* 折叠状态图标 */
@@ -126,7 +132,6 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background-color: #e9ecef;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -136,13 +141,19 @@
             flex-shrink: 0;
         }
 
+        /* 一级图标 */
+        .building-header .toggle-icon {
+            background-color: #d6e4ff;
+            color: #1866c1;
+        }
+
         .building-header.expanded .toggle-icon {
-            background-color: #409eff;
+            background-color: #1866c1;
             color: #fff;
             transform: rotate(45deg);
         }
 
-        /* 二级分类：宿舍号 */
+        /* 二级分类：宿舍号 - 绿色系 */
         .dorm-list {
             height: 0;
             overflow: hidden;
@@ -154,27 +165,45 @@
         }
 
         .dorm-item {
-            padding: 12px 15px;
-            border-top: 1px solid #eaecef;
+            padding: 0;
             transition: background-color 0.15s ease;
-        }
-
-        .dorm-item:hover {
-            background-color: #fafbfc;
+            border-left: 3px solid #b7eb8f;
+            border-right: 1px solid #f0f5e9;
         }
 
         .dorm-title {
             font-weight: 500;
-            color: #333;
-            margin-bottom: 10px;
+            color: #52c41a;
+            padding: 12px 15px;
+            margin-bottom: 0;
             font-size: 0.95rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            background-color: #f6ffed;
+            border-bottom: 1px solid #f0f5e9;
         }
 
-        /* 三级分类：微信用户 */
+        /* 二级徽章 */
+        .dorm-title .count-badge {
+            background-color: #b7eb8f;
+            color: #52c41a;
+        }
+
+        /* 二级图标 */
+        .dorm-title .toggle-icon {
+            background-color: #b7eb8f;
+            color: #52c41a;
+        }
+
+        .dorm-title.expanded .toggle-icon {
+            background-color: #52c41a;
+            color: #fff;
+            transform: rotate(45deg);
+        }
+
+        /* 三级分类：微信用户 - 紫色系 */
         .wechat-list {
             height: 0;
             overflow: hidden;
@@ -186,27 +215,44 @@
         }
 
         .wechat-item {
-            padding: 10px 15px 10px 30px;
-            border-top: 1px dashed #eaecef;
+            padding: 0;
             transition: background-color 0.15s ease;
-        }
-
-        .wechat-item:hover {
-            background-color: #f8f9fa;
+            border-left: 3px solid #e9d5ff;
         }
 
         .wechat-title {
             font-weight: 500;
-            color: #495057;
-            margin-bottom: 8px;
+            color: #722ed1;
+            padding: 10px 15px 10px 30px;
+            margin-bottom: 0;
             font-size: 0.9rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            background-color: #f9f0ff;
+            border-bottom: 1px solid #f2eaff;
         }
 
-        /* 四级：快递数据 */
+        /* 三级徽章 */
+        .wechat-title .count-badge {
+            background-color: #e9d5ff;
+            color: #722ed1;
+        }
+
+        /* 三级图标 */
+        .wechat-title .toggle-icon {
+            background-color: #e9d5ff;
+            color: #722ed1;
+        }
+
+        .wechat-title.expanded .toggle-icon {
+            background-color: #722ed1;
+            color: #fff;
+            transform: rotate(45deg);
+        }
+
+        /* 四级：快递数据 - 灰色系 */
         .express-list {
             height: 0;
             overflow: hidden;
@@ -238,7 +284,7 @@
         }
 
         .data-table th {
-            background-color: #fafbfc;
+            background-color: #f8f9fa;
             font-weight: 600;
             color: #6c757d;
             white-space: nowrap;
@@ -379,22 +425,14 @@
                 font-size: 1.2rem;
             }
 
-            .dorm-item {
-                padding: 15px 20px;
-            }
-
             .dorm-title {
+                padding: 15px 20px;
                 font-size: 1rem;
-                margin-bottom: 12px;
-            }
-
-            .wechat-item {
-                padding: 12px 20px 12px 40px;
             }
 
             .wechat-title {
+                padding: 12px 20px 12px 40px;
                 font-size: 0.95rem;
-                margin-bottom: 10px;
             }
 
             .data-table th,
