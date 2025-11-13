@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="./css/message-box.css">
     <script src="./js/showMessage.js"></script>
     <script src="./js/lib.js"></script>
+
     <style>
-        /* 全局样式重置与基础设置 */
         * {
             margin: 0;
             padding: 0;
@@ -22,7 +22,6 @@
             padding: 1rem;
         }
 
-        /* 响应式容器 */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -40,7 +39,6 @@
             font-size: 1.5rem;
         }
 
-        /* 日期选择器样式 */
         .date-selector {
             background-color: #f8f9fa;
             padding: 12px 15px;
@@ -73,7 +71,6 @@
             box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
         }
 
-        /* 折叠菜单核心样式 */
         .building-group {
             margin-bottom: 0.8rem;
             border-radius: 6px;
@@ -86,7 +83,6 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        /* 一级分类：栋 - 深蓝色系 */
         .building-header {
             background-color: #f0f7ff;
             padding: 12px 15px;
@@ -112,7 +108,6 @@
             align-items: center;
         }
 
-        /* 数量显示 */
         .count-badge {
             margin-left: 8px;
             font-size: 0.8rem;
@@ -121,13 +116,11 @@
             font-weight: normal;
         }
 
-        /* 一级徽章 */
         .building-title .count-badge {
             background-color: #d6e4ff;
             color: #1866c1;
         }
 
-        /* 折叠状态图标 */
         .toggle-icon {
             width: 20px;
             height: 20px;
@@ -141,7 +134,6 @@
             flex-shrink: 0;
         }
 
-        /* 一级图标 */
         .building-header .toggle-icon {
             background-color: #d6e4ff;
             color: #1866c1;
@@ -153,7 +145,6 @@
             transform: rotate(45deg);
         }
 
-        /* 二级分类：宿舍号 - 绿色系 */
         .dorm-list {
             height: 0;
             overflow: hidden;
@@ -185,13 +176,11 @@
             border-bottom: 1px solid #f0f5e9;
         }
 
-        /* 二级徽章 */
         .dorm-title .count-badge {
             background-color: #b7eb8f;
             color: #52c41a;
         }
 
-        /* 二级图标 */
         .dorm-title .toggle-icon {
             background-color: #b7eb8f;
             color: #52c41a;
@@ -203,7 +192,6 @@
             transform: rotate(45deg);
         }
 
-        /* 三级分类：微信用户 - 紫色系 */
         .wechat-list {
             height: 0;
             overflow: hidden;
@@ -234,13 +222,11 @@
             border-bottom: 1px solid #f2eaff;
         }
 
-        /* 三级徽章 */
         .wechat-title .count-badge {
             background-color: #e9d5ff;
             color: #722ed1;
         }
 
-        /* 三级图标 */
         .wechat-title .toggle-icon {
             background-color: #e9d5ff;
             color: #722ed1;
@@ -252,7 +238,6 @@
             transform: rotate(45deg);
         }
 
-        /* 四级：快递数据 - 灰色系 */
         .express-list {
             height: 0;
             overflow: hidden;
@@ -263,7 +248,6 @@
             height: auto;
         }
 
-        /* 响应式表格 */
         .table-container {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
@@ -297,7 +281,6 @@
             background-color: #f8f9fa;
         }
 
-        /* 按钮样式 */
         .btn {
             padding: 4px 8px;
             border: none;
@@ -321,7 +304,6 @@
             background-color: #337ecc;
         }
 
-        /* 提示信息 */
         .message {
             margin: 1rem 0;
             padding: 8px 12px;
@@ -343,7 +325,6 @@
             border: 1px solid #fde2e2;
         }
 
-        /* 空数据提示 */
         .empty-tip {
             color: #909399;
             padding: 15px;
@@ -354,7 +335,6 @@
             margin: 1rem 0;
         }
 
-        /* 加载中提示 */
         .loading-tip {
             color: #6c757d;
             padding: 20px;
@@ -381,7 +361,6 @@
             }
         }
 
-        /* PC端样式（屏幕宽度≥768px） */
         @media (min-width: 768px) {
             body {
                 padding: 2rem;
@@ -531,12 +510,12 @@
         // 分组数据处理（按楼栋→宿舍→微信ID）
         function groupData(items) {
             const buildingGroups = {};
-            
+
             items.forEach(item => {
                 // 提取微信ID和名称
                 const [wechatId, wechatName] = item.building_users_id.split(':').map(part => part.trim());
                 const fullWechat = item.building_users_id;
-                
+
                 // 构建完整信息
                 const fullItem = {
                     ...item,
@@ -681,7 +660,7 @@
                         // 快递数据表格
                         const tableContainer = document.createElement('div');
                         tableContainer.className = 'table-container';
-                        
+
                         const dataTable = document.createElement('table');
                         dataTable.className = 'data-table';
                         dataTable.innerHTML = `
@@ -746,7 +725,7 @@
                     header.classList.toggle('expanded');
                     const icon = header.querySelector('.toggle-icon');
                     icon.textContent = header.classList.contains('expanded') ? '×' : '+';
-                    
+
                     // 平滑滚动
                     if (header.classList.contains('expanded')) {
                         const dormList = header.nextElementSibling;
@@ -802,7 +781,7 @@
 
             // 日期变化时重新加载数据
             document.getElementById("today").addEventListener('change', getTodayData);
-            
+
             getTodayData();
         }
 
