@@ -23,6 +23,17 @@ let currentEditId = null;
 function renderTable(data, style = '') {
     // return;
     tableBody.innerHTML = '';
+
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     data.forEach(item => {
         const row = document.createElement('tr');
         row.id = "_" + item.id;
@@ -40,6 +51,25 @@ function renderTable(data, style = '') {
         } else if (item.status === '已完成') {
             statusClass = 'status_green';
         }
+        const notesText = escapeHtml(item.notes || '');
+        const notesImg = item.notes_img || '';
+        let notesCellHtml = `<span class="notes-text">${notesText}</span>`;
+        if (notesImg) {
+            const url = $HOST + '/uploads_notes/' + encodeURIComponent(notesImg);
+            notesCellHtml = `
+                <div class="notes-cell">
+                    <span class="notes-text">${notesText}</span>
+                    <img
+                        class="notes-thumb"
+                        src="${url}"
+                        alt="备注图片"
+                        loading="lazy"
+                        data-notes-url="${url}"
+                    >
+                </div>
+            `;
+        }
+
         row.innerHTML = `
                     <td>
                         <span>${item.create_at}</span>
@@ -49,7 +79,7 @@ function renderTable(data, style = '') {
                     <td>${item.room}</td>
                     <td>${item.pickupCode}</td>
                     <td>${item.expressNumber}</td>
-                    <td>${item.notes}</td>
+                    <td>${notesCellHtml}</td>
                     <td>${item.building_users_id}</td>
                     <td>${item.insert_time}</td>
                 `;
@@ -82,6 +112,32 @@ function renderTable(data, style = '') {
 
     });
 }
+
+// Notes image preview modal
+function openNotesImage(url) {
+    const modal = document.getElementById('notes-img-modal');
+    const img = document.getElementById('notes-img-modal-img');
+    if (!modal || !img) return;
+    img.src = url;
+    modal.style.display = 'flex';
+}
+
+function closeNotesImage() {
+    const modal = document.getElementById('notes-img-modal');
+    const img = document.getElementById('notes-img-modal-img');
+    if (img) img.src = '';
+    if (modal) modal.style.display = 'none';
+}
+
+// intercept thumbnail click before row onclick
+tableBody.addEventListener('click', function (e) {
+    const t = e.target;
+    if (t && t.classList && t.classList.contains('notes-thumb')) {
+        e.stopPropagation();
+        const url = t.getAttribute('data-notes-url') || '';
+        if (url) openNotesImage(url);
+    }
+}, true);
 
 function clickRow(id) {
     let clickedRowTds = document.querySelectorAll(`#${id} td`);
@@ -125,6 +181,19 @@ function openAddModal() {
     // document.getElementById('pickup-code-add').value = '';
     // document.getElementById('express-number-add').value = '';
     document.getElementById('notes-add').value = '';
+
+    // reset remark image
+    const fileInput = document.getElementById('notes-img-add');
+    const preview = document.getElementById('notes-img-preview-add');
+    const removeBtn = document.getElementById('notes-img-remove-btn');
+    const filenameEl = document.getElementById('notes-img-filename');
+    if (fileInput) fileInput.value = '';
+    if (preview) {
+        preview.src = '';
+        preview.style.display = 'none';
+    }
+    if (removeBtn) removeBtn.style.display = 'none';
+    if (filenameEl) filenameEl.textContent = '';
 
     addModal.style.display = 'flex';
 }
@@ -213,38 +282,129 @@ function addRecord() {
         })
     }
     let KeHuAdd = document.getElementById("kehu-add").value;
-    const newRecord = {
-        token: getToken(),
-        type: type,
-        time: document.getElementById('pickup-time-add').value,
-        building: document.querySelector('#building-add select').value,
-        room: document.getElementById('room-add').value,
-        codes: codes,
-        notes: document.getElementById('notes-add').value,
-        building_users_id: KeHuAdd
-    };
-    console.log(newRecord);
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", $HOST + "/addData.php", true);
-    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            console.log(xhr.responseText);
-            top.closeLoading();
-            let result = JSON.parse(xhr.responseText);
-            if (result.code == 200) {
-                getData();
-                resetToDefault();//重置快递包裹条目为1，更新索引排序
-                //刷新数据
-                closeModal();
-                top.showMessage(result.msg);
+    const notesText = document.getElementById('notes-add').value;
+    const fileInput = document.getElementById('notes-img-add');
+    const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+    function sendAddRequest(notesImgFilename = '') {
+        const newRecord = {
+            token: getToken(),
+            type: type,
+            time: document.getElementById('pickup-time-add').value,
+            building: document.querySelector('#building-add select').value,
+            room: document.getElementById('room-add').value,
+            codes: codes,
+            notes: notesText,
+            notes_img: notesImgFilename,
+            building_users_id: KeHuAdd
+        };
+        console.log(newRecord);
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", $HOST + "/addData.php", true);
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                console.log(xhr.responseText);
+                top.closeLoading();
+                let result = JSON.parse(xhr.responseText);
+                if (result.code == 200) {
+                    getData();
+                    resetToDefault();//重置快递包裹条目为1，更新索引排序
+                    closeModal();
+                    top.showMessage(result.msg);
+                } else {
+                    top.showMessage(result.msg, 3000, "red");
+                }
+            }
+        };
+        xhr.send(JSON.stringify(newRecord));
+    }
+
+    if (!file) {
+        sendAddRequest('');
+        return;
+    }
+
+    // Upload remark image first, then add data
+    const fd = new FormData();
+    fd.append('image', file);
+    let up = new XMLHttpRequest();
+    up.open('POST', $HOST + '/uploadNoteImg.php', true);
+    up.setRequestHeader('token', getToken());
+    up.onreadystatechange = function () {
+        if (up.readyState === 4) {
+            if (up.status !== 200) {
+                top.closeLoading();
+                top.showMessage('备注图片上传失败', 3000, 'red');
+                return;
+            }
+            let res = {};
+            try {
+                res = JSON.parse(up.responseText);
+            } catch (e) {
+                top.closeLoading();
+                top.showMessage('备注图片上传返回异常', 3000, 'red');
+                return;
+            }
+            if (res.code === 200 && res.data && res.data.filename) {
+                sendAddRequest(res.data.filename);
             } else {
-                top.showMessage(result.msg, 3000, "red");
+                top.closeLoading();
+                top.showMessage(res.msg || '备注图片上传失败', 3000, 'red');
             }
         }
     };
-    xhr.send(JSON.stringify(newRecord));
+    up.send(fd);
 }
+
+// remark image controls (add modal)
+window.addEventListener('DOMContentLoaded', function () {
+    const chooseBtn = document.getElementById('notes-img-choose-btn');
+    const removeBtn = document.getElementById('notes-img-remove-btn');
+    const fileInput = document.getElementById('notes-img-add');
+    const preview = document.getElementById('notes-img-preview-add');
+    const filenameEl = document.getElementById('notes-img-filename');
+
+    if (chooseBtn && fileInput) {
+        chooseBtn.addEventListener('click', function () {
+            fileInput.click();
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function () {
+            const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+            if (!file) return;
+            if (filenameEl) filenameEl.textContent = file.name;
+            if (removeBtn) removeBtn.style.display = 'inline-block';
+            if (preview) {
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+            }
+        });
+    }
+
+    if (removeBtn && fileInput) {
+        removeBtn.addEventListener('click', function () {
+            fileInput.value = '';
+            if (filenameEl) filenameEl.textContent = '';
+            if (preview) {
+                preview.src = '';
+                preview.style.display = 'none';
+            }
+            removeBtn.style.display = 'none';
+        });
+    }
+
+    // notes image modal: prevent inner click closing
+    const notesModalContent = document.querySelector('.notes-img-modal-content');
+    if (notesModalContent) {
+        notesModalContent.addEventListener('click', function (evt) {
+            evt.stopPropagation();
+        });
+    }
+});
 
 // 更新记录
 function updateRecord() {

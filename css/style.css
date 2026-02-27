@@ -201,6 +201,43 @@ tr:hover {
     background-color: #f8f9fa;
 }
 
+.notes-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notes-text {
+    display: inline-block;
+    max-width: 100%;
+    word-break: break-word;
+}
+
+.notes-thumb {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    object-fit: cover;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: #f1f5f9;
+}
+
+.notes-img-modal-content {
+    max-width: 720px;
+    height: auto;
+    max-height: 90%;
+}
+
+.notes-img-modal-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
 .actions {
     display: flex;
     gap: 10px;

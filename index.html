@@ -210,6 +210,17 @@
                     <label for="notes-add">备注信息</label>
                     <textarea id="notes-add" placeholder="可输入特殊要求或其他信息"></textarea>
                 </div>
+
+                <div class="form-group">
+                    <label>备注图片（可选）</label>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-primary" id="notes-img-choose-btn">选择图片</button>
+                        <button type="button" class="btn btn-danger" id="notes-img-remove-btn" style="display:none;">移除</button>
+                        <span id="notes-img-filename" style="color:#666;"></span>
+                    </div>
+                    <input type="file" accept="image/*" style="display:none;" id="notes-img-add">
+                    <img id="notes-img-preview-add" src="" alt="备注图片预览" style="display:none; max-width: 100%; margin-top:10px; border-radius:5px; border:1px solid #ddd; padding:5px;">
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger" id="cancel-add-btn">取消</button>
@@ -467,6 +478,19 @@
                 <button class="btn btn-warning"
                     onclick="document.getElementById('uploadImageInput').click();">修改</button>
                 <button class="btn btn-primary" id="copy-link-btn">复制链接</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 备注图片预览弹窗 -->
+    <div class="modal" id="notes-img-modal" onclick="closeNotesImage()">
+        <div class="modal-content notes-img-modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>备注图片</h2>
+                <button class="close-btn" onclick="closeNotesImage()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img id="notes-img-modal-img" src="" alt="备注图片" class="notes-img-modal-img">
             </div>
         </div>
     </div>

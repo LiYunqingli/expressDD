@@ -24,17 +24,29 @@ if (!empty($data)) {
             // $expressNumber = $data['expressNumber'];
             $codes = $data['codes'];
             $notes = $data['notes'];
+            $notes_img = isset($data['notes_img']) ? $data['notes_img'] : '';
             $building_users_id = $data['building_users_id'];
+
+            // basic escaping to reduce SQL injection risk in this endpoint
+            $time = mysqli_real_escape_string($conn, $time);
+            $building = mysqli_real_escape_string($conn, $building);
+            $room = mysqli_real_escape_string($conn, $room);
+            $notes = mysqli_real_escape_string($conn, $notes);
+            $notes_img = mysqli_real_escape_string($conn, $notes_img);
+            $userid = mysqli_real_escape_string($conn, $userid);
+            $building_users_id = mysqli_real_escape_string($conn, $building_users_id);
 
             $values = "";
             for ($i = 0; $i < count($codes); $i++){
                 $code = $codes[$i];
-                $pickupCode = $code['pickupCode'];
-                $expressNumber = $code['expressNumber'];
-                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes', '$userid', '$building_users_id'),";
+                $pickupCode = isset($code['pickupCode']) ? $code['pickupCode'] : '';
+                $expressNumber = isset($code['expressNumber']) ? $code['expressNumber'] : '';
+                $pickupCode = mysqli_real_escape_string($conn, $pickupCode);
+                $expressNumber = mysqli_real_escape_string($conn, $expressNumber);
+                $values .= "('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes', '$notes_img', '$userid', '$building_users_id'),";
             }
             $values = rtrim($values, ',');
-            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes, create_at, building_users_id) VALUES $values";
+            $sql = "INSERT INTO `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes, notes_img, create_at, building_users_id) VALUES $values";
             // echo $sql;
             // echo json_encode($codes);
             $result = mysqli_query($conn, $sql);

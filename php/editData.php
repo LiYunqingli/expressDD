@@ -23,6 +23,7 @@ if (!empty($data)) {
             $pickupCode = $data['pickupCode'];
             $expressNumber = $data['expressNumber'];
             $notes = $data['notes'];
+            $notes_img = isset($data['notes_img']) ? $data['notes_img'] : '';
             $id = $data['id'];
             $building_users_id = $data['building_users_id'];
             // $sql = "ALTER TABLE `data` (`time`, insert_time, building, room, pickupCode, expressNumber, notes) VALUES('$time', NOW(), '$building','$room','$pickupCode', '$expressNumber','$notes')";
@@ -35,6 +36,7 @@ if (!empty($data)) {
                             pickupCode = '$pickupCode', 
                             expressNumber = '$expressNumber', 
                             notes = '$notes',
+                            notes_img = '$notes_img',
                             building_users_id = '$building_users_id'
                         WHERE id = '$id'";
 
