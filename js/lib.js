@@ -7,7 +7,7 @@
 
 // ----------------------------------
 
-/* 主机地址 */const $MAIN = "https://kd.lihuarong.cn:8080";
+/* 主机地址 */const $MAIN = "http://lihuarong.love:8088";
 
 const $HOST = $MAIN + "/php";
 const $HOST_HOME = $MAIN + "/login.html"//登录页
