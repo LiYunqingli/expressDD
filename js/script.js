@@ -1508,6 +1508,29 @@ function updateTopDataSyncData(id, newStatus) {
     }
 }
 
+// 降级复制方案
+function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            top.showMessage("分享地址已复制到剪贴板", 3000, "green");
+        } else {
+            top.showMessage("复制失败，请手动复制", 3000, "red");
+        }
+    } catch (err) {
+        top.showMessage("复制失败，请手动复制", 3000, "red");
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
 // 同步数据(同步的是状态)
 function getSyncStatusData() {
     let xhr = new XMLHttpRequest();
