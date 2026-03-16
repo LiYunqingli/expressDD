@@ -1611,25 +1611,25 @@ function stopAutoHide() {
 }
 
 // 按钮点击调用
-function setAutoHide(){
+function setAutoHide() {
     let autoHide = localStorage.getItem("autoHide");
-    if(autoHide === "true"){
+    if (autoHide === "true") {
         stopAutoHide();
         document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已关闭隐藏';
         top.showMessage("已关闭自动隐藏已完成快递功能");
-    }else{
+    } else {
         startAutoHide();
         document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已开启隐藏';
         top.showMessage("已开启自动隐藏已完成快递功能");
     }
 }
 
-function initAutoHide(){
+function initAutoHide() {
     let autoHide = localStorage.getItem("autoHide");
-    if(autoHide === "true"){
+    if (autoHide === "true") {
         startAutoHide();
         document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已开启隐藏';
-    }else{
+    } else {
         stopAutoHide();
         document.getElementById("setAutoHideBtn").innerHTML = '<i class="fas fa-clock"></i> 已关闭隐藏';
     }
@@ -1640,7 +1640,7 @@ initAutoHide();
 
 function initGetSyncStatusData() {
     top.showMessage("已自动开启快递状态同步功能，双击页脚版权信息可关闭", 4000, 'green');
-    if(getDefaultSync()){
+    if (getDefaultSync()) {
         setInterval(getSyncStatusData, 5000);
     }
 }
@@ -1649,6 +1649,6 @@ function initGetSyncStatusData() {
 initGetSyncStatusData();
 
 // 新快递的数据同步
-function getSyncData(){
+function getSyncData() {
 
 }

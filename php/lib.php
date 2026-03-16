@@ -95,28 +95,57 @@ function parseToken($token)
 //检查token是否合法
 function checkToken($token, $conn, $type = "1")
 {
-    $user_token_data = json_decode(parseToken($token), true);
-    $userid = $user_token_data['username'];
-    $password = $user_token_data['password'];
-    $time = $user_token_data['time'];
+    // $user_token_data = json_decode(parseToken($token), true);
+    // $userid = $user_token_data['username'];
+    // $password = $user_token_data['password'];
+    // $time = $user_token_data['time'];
 
-    $config = getServerConfig();
-    $TokenExpirationTime = $config["TokenExpirationTime"];//单位是day
-    // if (time() - $time > 3600) {
-    if (time() - $time > $TokenExpirationTime * 24 * 3600) { //token过期时间
-        return false;
-    } else {
-        $sql = "SELECT * FROM users WHERE userid = '$userid' AND password = '$password'";
-        $result = $conn->query($sql);
-        if ($result->num_rows > 0) {
-            if ($type == "1") {
-                return true;
-            } else {
-                return $userid;
-            }
-        } else {
+    // $config = getServerConfig();
+    // $TokenExpirationTime = $config["TokenExpirationTime"];//单位是day
+    // // if (time() - $time > 3600) {
+    // if (time() - $time > $TokenExpirationTime * 24 * 3600) { //token过期时间
+    //     return false;
+    // } else {
+    //     $sql = "SELECT * FROM users WHERE userid = '$userid' AND password = '$password'";
+    //     $result = $conn->query($sql);
+    //     if ($result->num_rows > 0) {
+    //         if ($type == "1") {
+    //             return true;
+    //         } else {
+    //             return $userid;
+    //         }
+    //     } else {
+    //         return false;
+    //     }
+    // }
+
+    try {
+        $user_token_data = json_decode(parseToken($token), true);
+        $userid = $user_token_data['username'];
+        $password = $user_token_data['password'];
+        $time = $user_token_data['time'];
+
+        $config = getServerConfig();
+        $TokenExpirationTime = $config["TokenExpirationTime"];//单位是day
+        // if (time() - $time > 3600) {
+        if (time() - $time > $TokenExpirationTime * 24 * 3600) { //token过期时间
             return false;
+        } else {
+            $sql = "SELECT * FROM users WHERE userid = '$userid' AND password = '$password'";
+            $result = $conn->query($sql);
+            if ($result->num_rows > 0) {
+                if ($type == "1") {
+                    return true;
+                } else {
+                    return $userid;
+                }
+            } else {
+                return false;
+            }
         }
+    } catch (Exception $e) {
+        //记录日志
+        return false;
     }
 }
 

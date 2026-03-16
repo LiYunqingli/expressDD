@@ -215,11 +215,14 @@
                     <label>备注图片（可选）</label>
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <button type="button" class="btn btn-primary" id="notes-img-choose-btn">选择图片</button>
-                        <button type="button" class="btn btn-danger" id="notes-img-remove-btn" style="display:none;">移除</button>
+                        <button type="button" class="btn btn-danger" id="notes-img-remove-btn"
+                            style="display:none;">移除</button>
                         <span id="notes-img-filename" style="color:#666;"></span>
                     </div>
-                    <input type="file" accept="image/*" style="display:none;" id="notes-img-add">
-                    <img id="notes-img-preview-add" src="" alt="备注图片预览" style="display:none; max-width: 100%; margin-top:10px; border-radius:5px; border:1px solid #ddd; padding:5px;">
+                    <input type="file" accept="image/png, image/jpeg, image/gif" style="display:none;"
+                        id="notes-img-add">
+                    <img id="notes-img-preview-add" src="" alt="备注图片预览"
+                        style="display:none; max-width: 100%; margin-top:10px; border-radius:5px; border:1px solid #ddd; padding:5px;">
                 </div>
             </div>
             <div class="modal-footer">
@@ -495,7 +498,7 @@
         </div>
     </div>
 
-    <input type="file" accept="image/*" capture="environment" style="display: none;" id="uploadImageInput">
+    <input type="file" accept="image/*" style="display: none;" id="uploadImageInput">
     <script src="./js/loadLightDarkInit.js"></script>
     <script src="./js/script.js"></script>
     <script src="./js/confirm-dialog.js"></script>
