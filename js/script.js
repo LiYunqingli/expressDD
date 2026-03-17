@@ -15,6 +15,8 @@ const actionsHeader = document.querySelector('.actions-header');
 const dateSelect = document.getElementById('date-select');
 let isFirst = true;
 
+let priceEditor = null;
+
 // 当前活动标签
 let activeTab = 'deliver';
 // 当前编辑的记录ID
@@ -70,11 +72,15 @@ function renderTable(data, style = '') {
             `;
         }
 
+        const priceText = formatPriceDisplay(item.price);
+        const priceClass = priceText === '--' ? 'price-cell empty' : 'price-cell';
+
         row.innerHTML = `
                     <td>
                         <span>${item.create_at}</span>
                         <span class="status ${statusClass}" onclick="statusClick('${item.status}', '${item.id}')">${item.status}</span>
                     </td>
+                    <td class="${priceClass}" data-role="price-cell" data-id="${item.id}">${priceText}</td>
                     <td>${item.building}</td>
                     <td>${item.room}</td>
                     <td>${item.pickupCode}</td>
@@ -136,21 +142,31 @@ tableBody.addEventListener('click', function (e) {
         e.stopPropagation();
         const url = t.getAttribute('data-notes-url') || '';
         if (url) openNotesImage(url);
+        return;
+    }
+
+    const priceCell = t && t.closest ? t.closest('[data-role="price-cell"]') : null;
+    if (priceCell) {
+        e.stopPropagation();
+        const id = priceCell.getAttribute('data-id');
+        if (id) {
+            openPriceEditor(id);
+        }
     }
 }, true);
 
 function clickRow(id) {
     let clickedRowTds = document.querySelectorAll(`#${id} td`);
-    let building = clickedRowTds[1].innerText;
-    let room = clickedRowTds[2].innerText;
+    let building = clickedRowTds[2].innerText;
+    let room = clickedRowTds[3].innerText;
     // top.showMessage(`已选中 "${building} ${room}"`)
     let allRow = document.querySelectorAll("#records-table tbody tr");
     let count = 0;
     allRow.forEach((row) => {
         // console.log(row);
         //#e3f2fd
-        let _building = row.querySelector('td:nth-child(2)').innerText;
-        let _room = row.querySelector('td:nth-child(3)').innerText;
+        let _building = row.querySelector('td:nth-child(3)').innerText;
+        let _room = row.querySelector('td:nth-child(4)').innerText;
         if (_building == building && _room == room) {
             if (row.style.backgroundColor == '#e3f2fd' || row.style.backgroundColor == 'rgb(227, 242, 253)') {
                 //去掉行内样式
@@ -211,6 +227,7 @@ function openEditModal(id) {
     document.getElementById('room-edit').value = record.room;
     document.getElementById('pickup-code-edit').value = record.pickupCode;
     document.getElementById('express-number-edit').value = record.expressNumber;
+    document.getElementById('price-edit').value = normalizePriceValue(record.price) || '';
     document.getElementById('notes-edit').value = record.notes;
     document.getElementById('pickup-time-edit').value = record.time;
 
@@ -420,6 +437,13 @@ function updateRecord() {
         record.room = document.getElementById('room-edit').value;
         record.pickupCode = document.getElementById('pickup-code-edit').value;
         record.expressNumber = document.getElementById('express-number-edit').value;
+        const editPriceRaw = document.getElementById('price-edit').value;
+        const editPrice = sanitizePriceInput(editPriceRaw);
+        if (String(editPriceRaw).trim() !== '' && !editPrice) {
+            top.showMessage('价格格式错误，请输入大于 0 的数字', 3000, 'red');
+            return;
+        }
+        record.price = editPrice;
         record.notes = document.getElementById('notes-edit').value;
         record.building_users_id = document.getElementById('kehu-edit').value;
 
@@ -836,6 +860,7 @@ function delAllLocalToken() {
 
 // 初始化页面
 function init() {
+    initPriceEditor();
     setToday();
     loadBuilding();
     getData();
@@ -1041,6 +1066,184 @@ function init() {
         }
     });
 
+}
+
+function buildPriceOptions() {
+    const options = [];
+    for (let i = 10; i <= 50; i++) {
+        const val = (i / 10).toFixed(1);
+        options.push(val);
+    }
+    return options;
+}
+
+function normalizePriceValue(raw) {
+    if (raw === null || raw === undefined) return '';
+    const str = String(raw).trim();
+    if (!str) return '';
+    const num = Number(str);
+    if (!Number.isFinite(num) || num <= 0) return '';
+    return num.toFixed(1);
+}
+
+function sanitizePriceInput(raw) {
+    const normalized = normalizePriceValue(raw);
+    return normalized || '';
+}
+
+function formatPriceDisplay(raw) {
+    const normalized = normalizePriceValue(raw);
+    return normalized ? `￥${normalized}` : '--';
+}
+
+function initPriceEditor() {
+    if (priceEditor) return;
+    const options = buildPriceOptions();
+    const optionHtml = options.map(v => `<option value="${v}">￥${v}</option>`).join('');
+    const html = `
+        <div class="price-editor-overlay" id="price-editor-overlay">
+            <div class="price-editor-card" onclick="event.stopPropagation()">
+                <div class="price-editor-header">设置价格</div>
+                <div class="price-editor-body">
+                    <div class="hint">支持快速滑动、下拉选择或自定义输入</div>
+                    <input type="range" id="price-editor-range" min="1.0" max="5.0" step="0.1" value="1.0">
+                    <select id="price-editor-select">${optionHtml}<option value="custom">5.0 以上（自定义）</option></select>
+                    <input type="number" id="price-editor-custom" min="5.0" step="0.1" placeholder="自定义价格（>= 5.0）" style="display:none;">
+                </div>
+                <div class="price-editor-footer">
+                    <button class="btn btn-danger" id="price-editor-cancel">取消</button>
+                    <button class="btn btn-success" id="price-editor-save">保存</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    const overlay = document.getElementById('price-editor-overlay');
+    const range = document.getElementById('price-editor-range');
+    const select = document.getElementById('price-editor-select');
+    const custom = document.getElementById('price-editor-custom');
+    const cancel = document.getElementById('price-editor-cancel');
+    const save = document.getElementById('price-editor-save');
+
+    const syncFromRange = () => {
+        const value = Number(range.value).toFixed(1);
+        select.value = value;
+        custom.style.display = 'none';
+        custom.value = '';
+    };
+
+    const syncFromSelect = () => {
+        if (select.value === 'custom') {
+            custom.style.display = 'block';
+            custom.focus();
+            return;
+        }
+        custom.style.display = 'none';
+        custom.value = '';
+        range.value = select.value;
+    };
+
+    range.addEventListener('input', syncFromRange);
+    select.addEventListener('change', syncFromSelect);
+
+    overlay.addEventListener('click', () => closePriceEditor());
+    cancel.addEventListener('click', () => closePriceEditor());
+    save.addEventListener('click', () => savePriceEditor());
+
+    priceEditor = {
+        overlay,
+        range,
+        select,
+        custom,
+        targetId: null
+    };
+}
+
+function openPriceEditor(id) {
+    const record = top.data.find(item => String(item.id) === String(id));
+    if (!record) {
+        top.showMessage('未找到对应记录', 3000, 'red');
+        return;
+    }
+    const value = normalizePriceValue(record.price) || '1.0';
+    priceEditor.targetId = String(id);
+    priceEditor.range.value = value;
+    if (Number(value) <= 5) {
+        priceEditor.select.value = value;
+        priceEditor.custom.style.display = 'none';
+        priceEditor.custom.value = '';
+    } else {
+        priceEditor.select.value = 'custom';
+        priceEditor.custom.style.display = 'block';
+        priceEditor.custom.value = value;
+    }
+    priceEditor.overlay.classList.add('show');
+}
+
+function closePriceEditor() {
+    if (!priceEditor) return;
+    priceEditor.overlay.classList.remove('show');
+    priceEditor.targetId = null;
+}
+
+function savePriceEditor() {
+    if (!priceEditor || !priceEditor.targetId) return;
+
+    let value = '';
+    if (priceEditor.select.value === 'custom') {
+        value = sanitizePriceInput(priceEditor.custom.value);
+        if (!value || Number(value) < 5) {
+            top.showMessage('自定义价格需大于等于 5.0', 3000, 'red');
+            return;
+        }
+    } else {
+        value = sanitizePriceInput(priceEditor.select.value || priceEditor.range.value);
+    }
+
+    if (!value) {
+        top.showMessage('价格格式无效', 3000, 'red');
+        return;
+    }
+
+    updatePriceOnly(priceEditor.targetId, value);
+}
+
+function updatePriceOnly(id, price) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', $HOST + '/setDataPrice.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+            let result = null;
+            try {
+                result = JSON.parse(xhr.responseText);
+            } catch (e) {
+                top.showMessage('价格更新失败：响应格式错误', 3000, 'red');
+                return;
+            }
+
+            if (xhr.status === 200 && result.code === 200) {
+                const target = top.data.find(item => String(item.id) === String(id));
+                if (target) {
+                    target.price = price;
+                }
+                const row = document.getElementById('_' + id);
+                if (row) {
+                    const cell = row.querySelector('[data-role="price-cell"]');
+                    if (cell) {
+                        cell.textContent = formatPriceDisplay(price);
+                        cell.classList.remove('empty');
+                    }
+                }
+                top.showMessage(result.msg || '价格更新成功');
+                closePriceEditor();
+            } else {
+                top.showMessage((result && result.msg) ? result.msg : '价格更新失败', 3000, 'red');
+            }
+        }
+    };
+    xhr.send(`token=${encodeURIComponent(getToken())}&id=${encodeURIComponent(id)}&price=${encodeURIComponent(price)}`);
 }
 
 // 导出所有数据到xlsx（支持URL下载）

@@ -39,7 +39,7 @@ class SelectList {
         document.getElementById('selectlistCancelBtn').addEventListener('click', () => this.close(false));
         document.getElementById('selectlistConfirmBtn').addEventListener('click', () => this.close(true));
         document.getElementById('selectlistSelectAllBtn').addEventListener('click', () => this.toggleSelectAll());
-        
+
         // 添加搜索功能
         document.getElementById('selectlistSearch').addEventListener('input', (e) => {
             this.filterOptions(e.target.value);
@@ -57,7 +57,7 @@ class SelectList {
 
     setColumnKey(key) {
         this.currentColumnKey = key;
-        
+
         // 如果没有该列的记忆，初始化
         if (!this.columnMemory[this.currentColumnKey]) {
             this.columnMemory[this.currentColumnKey] = {
@@ -110,14 +110,14 @@ class SelectList {
 
     applyMemoryToOptions() {
         if (!this.currentColumnKey || !this.columnMemory[this.currentColumnKey]) return;
-        
+
         const memory = this.columnMemory[this.currentColumnKey];
-        
+
         this.currentOptions.forEach(option => {
             // 如果该选项的值在记忆的选择列表中，则选中
             option.selected = memory.selectedValues.includes(option.value);
         });
-        
+
         this.selectedOptions = memory.selectedValues.slice();
     }
 
@@ -129,7 +129,7 @@ class SelectList {
             const optionElement = document.createElement('div');
             optionElement.className = 'selectlist-option';
             optionElement.dataset.value = option.value;
-            
+
             if (option.selected) {
                 optionElement.classList.add('selected');
             }
@@ -167,7 +167,7 @@ class SelectList {
             optionElement.querySelector('.selectlist-checkmark').innerHTML = '';
             this.selectedOptions = this.selectedOptions.filter(val => val !== option.value);
         }
-        
+
         // 更新全选按钮状态
         this.updateSelectAllButton();
     }
@@ -175,17 +175,17 @@ class SelectList {
     toggleSelectAll() {
         const allOptions = document.querySelectorAll('.selectlist-option:not([style*="display: none"])');
         const selectedOptions = document.querySelectorAll('.selectlist-option.selected:not([style*="display: none"])');
-        
+
         // 如果当前可见选项已全部选中，则取消全选
         const shouldSelectAll = selectedOptions.length !== allOptions.length;
-        
+
         allOptions.forEach(option => {
             const value = option.dataset.value;
             const index = this.currentOptions.findIndex(opt => opt.value === value);
-            
+
             if (index !== -1) {
                 this.currentOptions[index].selected = shouldSelectAll;
-                
+
                 if (shouldSelectAll) {
                     option.classList.add('selected');
                     option.querySelector('.selectlist-checkmark').innerHTML = '✓';
@@ -199,7 +199,7 @@ class SelectList {
                 }
             }
         });
-        
+
         // 更新全选按钮文本
         const selectAllBtn = document.getElementById('selectlistSelectAllBtn');
         selectAllBtn.textContent = shouldSelectAll ? '全不选' : '全选';
@@ -208,7 +208,7 @@ class SelectList {
     updateSelectAllButton() {
         const allOptions = document.querySelectorAll('.selectlist-option:not([style*="display: none"])');
         const selectedOptions = document.querySelectorAll('.selectlist-option.selected:not([style*="display: none"])');
-        
+
         const selectAllBtn = document.getElementById('selectlistSelectAllBtn');
         selectAllBtn.textContent = selectedOptions.length === allOptions.length ? '全不选' : '全选';
     }
@@ -216,7 +216,7 @@ class SelectList {
     filterOptions(searchTerm) {
         const options = document.querySelectorAll('.selectlist-option');
         const lowerSearchTerm = searchTerm.toLowerCase();
-        
+
         options.forEach(option => {
             const text = option.querySelector('.selectlist-text').textContent.toLowerCase();
             if (text.includes(lowerSearchTerm)) {
@@ -225,7 +225,7 @@ class SelectList {
                 option.style.display = 'none';
             }
         });
-        
+
         // 更新全选按钮状态
         this.updateSelectAllButton();
     }

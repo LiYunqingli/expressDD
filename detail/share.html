@@ -245,7 +245,7 @@
             background: #d4edda;
             color: #155724;
         }
-        
+
         .lottery-tag {
             display: inline-flex;
             align-items: center;
@@ -572,6 +572,7 @@
                             <th>快递编号</th>
                             <th>取件码</th>
                             <th>当前状态</th>
+                            <th>价格</th>
                             <th>中奖状态</th>
                             <th>操作</th>
                         </tr>
@@ -579,7 +580,7 @@
                     <tbody id="express-list">
                         <!-- 示例数据行（后期通过API动态渲染） -->
                         <tr>
-                            <td colspan="4" style="text-align: center;">
+                            <td colspan="6" style="text-align: center;">
                                 当天您没有其他快递
                             </td>
                         </tr>
@@ -646,7 +647,7 @@
                                     4: "等待开奖"
                                 };
                                 lotteryStatusEl.textContent = statusTextMap[lotteryStatus];
-                                if(lotteryStatus != 1){
+                                if (lotteryStatus != 1) {
                                     getCjName(pid);
                                 }
                                 lotteryStatusCard.setAttribute('data-status', lotteryStatus);
@@ -715,7 +716,7 @@
             loadOtherExpressStatus(pid);
         });
 
-        function getCjName(id){
+        function getCjName(id) {
             let xhr = new XMLHttpRequest();
             xhr.open("GET", $HOST + "/getCjName.php?id=" + id, true);
             xhr.onreadystatechange = function () {
@@ -725,7 +726,7 @@
                         document.getElementById("lottery-status-name").innerText = result.name;
                         setTimeout(() => {
                             autoUpdateLotteryStatusText(false); // 启动自动切换
-                        },1000);
+                        }, 1000);
                     }
                 }
             };
@@ -801,10 +802,13 @@
                 const lotteryStatus = lotteryStatusMap.find(s => s.status === item.lotteryStatus) || lotteryStatusMap[0];
 
                 const tr = document.createElement('tr');
+                const priceNum = Number(item.price);
+                const priceText = Number.isFinite(priceNum) && priceNum > 0 ? `￥${priceNum.toFixed(1)}` : '--';
                 tr.innerHTML = `
                     <td>${item.expressNo}</td>
                     <td>${item.pickupCode}</td>
                     <td><span class="status-tag ${deliveryStatus.class}">${deliveryStatus.text}</span></td>
+                    <td>${priceText}</td>
                     <td>
                         <span class="lottery-tag" data-status="${lotteryStatus.status}">
                             <i class="fas fa-${lotteryStatus.icon}"></i> ${lotteryStatus.text}

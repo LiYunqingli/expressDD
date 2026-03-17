@@ -23,6 +23,7 @@ if (checkParm($pid)) {
                 $status = $data[$i]['status'];
                 $id = $data[$i]['id'];
                 $pickupCode = $data[$i]['pickupCode'];
+                $price = $data[$i]['price'];
                 if ($status == "未送达") {
                     $status = 0;
                 } else if ($status == "待分享") {
@@ -58,7 +59,8 @@ if (checkParm($pid)) {
                     "expressNo" => $data[$i]['id'],
                     "deliveryStatus" => $status,
                     "lotteryStatus" => $cjStatus,
-                    "pickupCode" => $pickupCode
+                    "pickupCode" => $pickupCode,
+                    "price" => $price
                 );
             }
             $arr = array(
