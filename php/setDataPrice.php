@@ -8,7 +8,7 @@ $id = isset($_POST['id']) ? $_POST['id'] : '';
 $price = isset($_POST['price']) ? $_POST['price'] : '';
 $field = isset($_POST['field']) ? $_POST['field'] : 'price';
 
-if (!checkParm($token) || !checkParm($id) || !checkParm($price)) {
+if (!checkParm($token) || !checkParm($id) || !isset($_POST['price']) || trim((string) $price) === '') {
     echo json_encode(array(
         "code" => 400,
         "msg" => "缺少参数"
@@ -24,10 +24,11 @@ if (!checkToken($token, $conn)) {
     exit;
 }
 
-if (!is_numeric($price)) {
+$price = trim((string) $price);
+if (!preg_match('/^\d+(\.\d{1,2})?$/', $price)) {
     echo json_encode(array(
         "code" => 402,
-        "msg" => "价格格式错误"
+        "msg" => "价格格式错误，最多两位小数"
     ));
     exit;
 }
@@ -41,15 +42,15 @@ if ($field !== 'price' && $field !== 'new_price') {
 }
 
 $priceNum = floatval($price);
-if ($priceNum <= 0) {
+if ($priceNum < 0) {
     echo json_encode(array(
         "code" => 403,
-        "msg" => "价格必须大于0"
+        "msg" => "价格必须大于等于0"
     ));
     exit;
 }
 
-$priceStr = number_format($priceNum, 1, '.', '');
+$priceStr = number_format($priceNum, 2, '.', '');
 $idEsc = mysqli_real_escape_string($conn, $id);
 $priceEsc = mysqli_real_escape_string($conn, $priceStr);
 $fieldEsc = mysqli_real_escape_string($conn, $field);

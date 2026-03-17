@@ -442,7 +442,7 @@ function updateRecord() {
         const editPriceRaw = document.getElementById('price-edit').value;
         const editPrice = sanitizePriceInput(editPriceRaw);
         if (String(editPriceRaw).trim() !== '' && !editPrice) {
-            top.showMessage('价格格式错误，请输入大于 0 的数字', 3000, 'red');
+            top.showMessage('价格格式错误，请输入大于等于 0 的数字（最多两位小数）', 3000, 'red');
             return;
         }
         record.price = editPrice;
@@ -1136,7 +1136,7 @@ function init() {
 
 function buildPriceOptions() {
     const options = [];
-    for (let i = 10; i <= 50; i++) {
+    for (let i = 0; i <= 50; i++) {
         const val = (i / 10).toFixed(1);
         options.push(val);
     }
@@ -1147,14 +1147,25 @@ function normalizePriceValue(raw) {
     if (raw === null || raw === undefined) return '';
     const str = String(raw).trim();
     if (!str) return '';
+    if (!/^\d+(\.\d{1,2})?$/.test(str)) return '';
     const num = Number(str);
-    if (!Number.isFinite(num) || num <= 0) return '';
-    return num.toFixed(1);
+    if (!Number.isFinite(num) || num < 0) return '';
+    return num.toFixed(2);
 }
 
 function sanitizePriceInput(raw) {
     const normalized = normalizePriceValue(raw);
     return normalized || '';
+}
+
+function toRangeOptionValue(raw) {
+    const normalized = normalizePriceValue(raw);
+    if (!normalized) return '';
+    const num = Number(normalized);
+    if (!Number.isFinite(num) || num < 0 || num > 5) return '';
+    const tenth = Math.round(num * 10);
+    if (Math.abs(num * 10 - tenth) > 1e-6) return '';
+    return (tenth / 10).toFixed(1);
 }
 
 function formatPriceDisplay(raw) {
@@ -1177,9 +1188,9 @@ function initPriceEditor() {
                 <div class="price-editor-header">设置价格</div>
                 <div class="price-editor-body">
                     <div class="hint">支持快速滑动、下拉选择或自定义输入</div>
-                    <input type="range" id="price-editor-range" min="1.0" max="5.0" step="0.1" value="1.0">
-                    <select id="price-editor-select">${optionHtml}<option value="custom">5.0 以上（自定义）</option></select>
-                    <input type="number" id="price-editor-custom" min="5.0" step="0.1" placeholder="自定义价格（>= 5.0）" style="display:none;">
+                    <input type="range" id="price-editor-range" min="0.0" max="5.0" step="0.1" value="0.0">
+                    <select id="price-editor-select">${optionHtml}<option value="custom">自定义输入</option></select>
+                    <input type="number" id="price-editor-custom" min="0" step="0.01" placeholder="自定义价格（>= 0，最多两位小数）" style="display:none;">
                 </div>
                 <div class="price-editor-footer">
                     <button class="btn btn-danger" id="price-editor-cancel">取消</button>
@@ -1241,18 +1252,22 @@ function openPriceEditor(id, field = 'price', options = {}) {
         return;
     }
 
-    const currentRaw = field === 'new_price' ? record.new_price : record.price;
-    const value = normalizePriceValue(currentRaw) || '1.0';
+    const currentRaw = field === 'new_price'
+        ? (normalizePriceValue(record.new_price) ? record.new_price : record.price)
+        : record.price;
+    const value = normalizePriceValue(currentRaw) || '0.00';
+    const rangeValue = toRangeOptionValue(value);
     priceEditor.targetId = String(id);
     priceEditor.targetField = field === 'new_price' ? 'new_price' : 'price';
     priceEditor.onSaved = typeof options.onSaved === 'function' ? options.onSaved : null;
     priceEditor.silent = !!options.silent;
-    priceEditor.range.value = value;
-    if (Number(value) <= 5) {
-        priceEditor.select.value = value;
+    if (rangeValue) {
+        priceEditor.range.value = rangeValue;
+        priceEditor.select.value = rangeValue;
         priceEditor.custom.style.display = 'none';
         priceEditor.custom.value = '';
     } else {
+        priceEditor.range.value = '0.0';
         priceEditor.select.value = 'custom';
         priceEditor.custom.style.display = 'block';
         priceEditor.custom.value = value;
@@ -1275,8 +1290,8 @@ function savePriceEditor() {
     let value = '';
     if (priceEditor.select.value === 'custom') {
         value = sanitizePriceInput(priceEditor.custom.value);
-        if (!value || Number(value) < 5) {
-            top.showMessage('自定义价格需大于等于 5.0', 3000, 'red');
+        if (!value) {
+            top.showMessage('请输入大于等于 0 的价格（最多两位小数）', 3000, 'red');
             return;
         }
     } else {
@@ -1365,11 +1380,11 @@ function renderSharePriceSummary(list, totals, currentId) {
         body.appendChild(tr);
     });
 
-    const totalPrice = Number(totals.totalPrice || 0);
-    const totalNewPrice = Number(totals.totalNewPrice || 0);
-    const grandTotal = Number(totals.grandTotal || 0);
-    // grandTotalEl.textContent = `￥${grandTotal.toFixed(1)}（一价合计 ${totalPrice.toFixed(1)} + 二价合计 ${totalNewPrice.toFixed(1)}）`;
-    grandTotalEl.textContent = `￥${grandTotal.toFixed(1)}`;
+    const avgTotal = list.reduce((sum, item) => {
+        const avg = Number(normalizePriceValue(item.avg) || 0);
+        return sum + avg;
+    }, 0);
+    grandTotalEl.textContent = `￥${avgTotal.toFixed(2)}`;
 }
 
 function loadSharePriceSummary(pid) {
@@ -1407,7 +1422,7 @@ function initShareNewPriceEditor() {
     if (!range || !select || !custom) return;
 
     const options = buildPriceOptions();
-    select.innerHTML = options.map(v => `<option value="${v}">￥${v}</option>`).join('') + '<option value="custom">5.0 以上（自定义）</option>';
+    select.innerHTML = options.map(v => `<option value="${v}">￥${v}</option>`).join('') + '<option value="custom">自定义输入</option>';
 
     const syncFromRange = () => {
         const value = Number(range.value).toFixed(1);
@@ -1439,15 +1454,17 @@ function initShareNewPriceEditor() {
     };
 }
 
-function setShareNewPriceEditorValue(raw) {
+function setShareNewPriceEditorValue(raw, fallbackRaw = '') {
     if (!shareNewPriceEditor) return;
-    const value = normalizePriceValue(raw) || '1.0';
-    if (Number(value) <= 5) {
-        shareNewPriceEditor.range.value = value;
-        shareNewPriceEditor.select.value = value;
+    const value = normalizePriceValue(raw) || normalizePriceValue(fallbackRaw) || '0.00';
+    const rangeValue = toRangeOptionValue(value);
+    if (rangeValue) {
+        shareNewPriceEditor.range.value = rangeValue;
+        shareNewPriceEditor.select.value = rangeValue;
         shareNewPriceEditor.custom.style.display = 'none';
         shareNewPriceEditor.custom.value = '';
     } else {
+        shareNewPriceEditor.range.value = '0.0';
         shareNewPriceEditor.select.value = 'custom';
         shareNewPriceEditor.custom.style.display = 'inline-block';
         shareNewPriceEditor.custom.value = value;
@@ -1458,7 +1475,7 @@ function getShareNewPriceEditorValue() {
     if (!shareNewPriceEditor) return '';
     if (shareNewPriceEditor.select.value === 'custom') {
         const customValue = sanitizePriceInput(shareNewPriceEditor.custom.value);
-        if (!customValue || Number(customValue) < 5) {
+        if (!customValue) {
             return '__INVALID_CUSTOM__';
         }
         return customValue;
@@ -1479,7 +1496,7 @@ document.addEventListener('click', function (evt) {
             loadSharePriceSummary(top.upload_image_data_id);
             const currentRecord = top.data.find(item => String(item.id) === String(top.upload_image_data_id));
             if (currentRecord) {
-                setShareNewPriceEditorValue(currentRecord.new_price);
+                setShareNewPriceEditorValue(currentRecord.new_price, currentRecord.price);
             }
         }
     });
@@ -1795,13 +1812,13 @@ function statusClick(status, id) {
         if (pickupCodeEl) {
             pickupCodeEl.textContent = currentRecord.pickupCode || '--';
         }
-        setShareNewPriceEditorValue(currentRecord.new_price);
+        setShareNewPriceEditorValue(currentRecord.new_price, currentRecord.price);
         const saveNewPriceBtn = document.getElementById('save-share-new-price-btn');
         if (saveNewPriceBtn) {
             saveNewPriceBtn.onclick = function () {
                 const val = getShareNewPriceEditorValue();
                 if (val === '__INVALID_CUSTOM__') {
-                    top.showMessage('自定义价格需大于等于 5.0', 3000, 'red');
+                    top.showMessage('请输入大于等于 0 的价格（最多两位小数）', 3000, 'red');
                     return;
                 }
                 if (!val) {
@@ -1886,7 +1903,7 @@ function closeShareModal() {
 function setDataSuccess(id) {
     const newPrice = getShareNewPriceEditorValue();
     if (newPrice === '__INVALID_CUSTOM__') {
-        top.showMessage('自定义价格需大于等于 5.0', 3000, 'red');
+        top.showMessage('请输入大于等于 0 的价格（最多两位小数）', 3000, 'red');
         return;
     }
     if (newPrice) {

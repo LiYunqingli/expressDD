@@ -594,17 +594,17 @@ footer {
 }
 
 .share-price-summary-table {
-    width: 100%;
-    min-width: 420px;
+    width: auto;
+    min-width: 50px;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .share-price-summary-table th,
 .share-price-summary-table td {
-    padding: 6px 8px;
+    padding: 5px 6px;
     border-bottom: 1px solid var(--border);
-    font-size: 13px;
+    font-size: 12px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -612,7 +612,7 @@ footer {
 
 .share-price-summary-table th:nth-child(1),
 .share-price-summary-table td:nth-child(1) {
-    width: 36%;
+    width: 120px;
 }
 
 .share-price-summary-table th:nth-child(2),
@@ -621,7 +621,7 @@ footer {
 .share-price-summary-table td:nth-child(3),
 .share-price-summary-table th:nth-child(4),
 .share-price-summary-table td:nth-child(4) {
-    width: 21.33%;
+    width: 78px;
 }
 
 .share-price-summary-table tfoot td {
