@@ -17,6 +17,7 @@ const dateSelect = document.getElementById('date-select');
 let isFirst = true;
 
 let priceEditor = null;
+let shareNewPriceEditor = null;
 
 // 当前活动标签
 let activeTab = 'deliver';
@@ -923,6 +924,7 @@ function delAllLocalToken() {
 // 初始化页面
 function init() {
     initPriceEditor();
+    initShareNewPriceEditor();
     setToday();
     loadPricePublishSetting(dateSelect.value);
     loadBuilding();
@@ -1396,6 +1398,74 @@ function loadSharePriceSummary(pid) {
     xhr.send();
 }
 
+function initShareNewPriceEditor() {
+    if (shareNewPriceEditor) return;
+
+    const range = document.getElementById('share-new-price-range');
+    const select = document.getElementById('share-new-price-select');
+    const custom = document.getElementById('share-new-price-custom');
+    if (!range || !select || !custom) return;
+
+    const options = buildPriceOptions();
+    select.innerHTML = options.map(v => `<option value="${v}">￥${v}</option>`).join('') + '<option value="custom">5.0 以上（自定义）</option>';
+
+    const syncFromRange = () => {
+        const value = Number(range.value).toFixed(1);
+        select.value = value;
+        custom.style.display = 'none';
+        custom.value = '';
+    };
+
+    const syncFromSelect = () => {
+        if (select.value === 'custom') {
+            custom.style.display = 'inline-block';
+            custom.focus();
+            return;
+        }
+        custom.style.display = 'none';
+        custom.value = '';
+        range.value = select.value;
+    };
+
+    range.addEventListener('input', syncFromRange);
+    select.addEventListener('change', syncFromSelect);
+
+    shareNewPriceEditor = {
+        range,
+        select,
+        custom,
+        syncFromRange,
+        syncFromSelect
+    };
+}
+
+function setShareNewPriceEditorValue(raw) {
+    if (!shareNewPriceEditor) return;
+    const value = normalizePriceValue(raw) || '1.0';
+    if (Number(value) <= 5) {
+        shareNewPriceEditor.range.value = value;
+        shareNewPriceEditor.select.value = value;
+        shareNewPriceEditor.custom.style.display = 'none';
+        shareNewPriceEditor.custom.value = '';
+    } else {
+        shareNewPriceEditor.select.value = 'custom';
+        shareNewPriceEditor.custom.style.display = 'inline-block';
+        shareNewPriceEditor.custom.value = value;
+    }
+}
+
+function getShareNewPriceEditorValue() {
+    if (!shareNewPriceEditor) return '';
+    if (shareNewPriceEditor.select.value === 'custom') {
+        const customValue = sanitizePriceInput(shareNewPriceEditor.custom.value);
+        if (!customValue || Number(customValue) < 5) {
+            return '__INVALID_CUSTOM__';
+        }
+        return customValue;
+    }
+    return sanitizePriceInput(shareNewPriceEditor.select.value || shareNewPriceEditor.range.value);
+}
+
 document.addEventListener('click', function (evt) {
     const target = evt.target;
     if (!target || !target.closest) return;
@@ -1409,10 +1479,7 @@ document.addEventListener('click', function (evt) {
             loadSharePriceSummary(top.upload_image_data_id);
             const currentRecord = top.data.find(item => String(item.id) === String(top.upload_image_data_id));
             if (currentRecord) {
-                const input = document.getElementById('share-new-price-input');
-                if (input) {
-                    input.value = normalizePriceValue(currentRecord.new_price) || '';
-                }
+                setShareNewPriceEditorValue(currentRecord.new_price);
             }
         }
     });
@@ -1728,17 +1795,13 @@ function statusClick(status, id) {
         if (pickupCodeEl) {
             pickupCodeEl.textContent = currentRecord.pickupCode || '--';
         }
-        const shareNewPriceInput = document.getElementById('share-new-price-input');
-        if (shareNewPriceInput) {
-            shareNewPriceInput.value = normalizePriceValue(currentRecord.new_price) || '';
-        }
+        setShareNewPriceEditorValue(currentRecord.new_price);
         const saveNewPriceBtn = document.getElementById('save-share-new-price-btn');
         if (saveNewPriceBtn) {
             saveNewPriceBtn.onclick = function () {
-                const raw = shareNewPriceInput ? shareNewPriceInput.value : '';
-                const val = sanitizePriceInput(raw);
-                if (String(raw).trim() !== '' && !val) {
-                    top.showMessage('第二次定价格式错误，请输入大于 0 的数字', 3000, 'red');
+                const val = getShareNewPriceEditorValue();
+                if (val === '__INVALID_CUSTOM__') {
+                    top.showMessage('自定义价格需大于等于 5.0', 3000, 'red');
                     return;
                 }
                 if (!val) {
@@ -1746,9 +1809,7 @@ function statusClick(status, id) {
                     return;
                 }
                 updatePriceOnly(id, val, 'new_price', function () {
-                    if (shareNewPriceInput) {
-                        shareNewPriceInput.value = val;
-                    }
+                    setShareNewPriceEditorValue(val);
                     loadSharePriceSummary(id);
                 });
             };
@@ -1823,14 +1884,12 @@ function closeShareModal() {
 
 // 设置当前快递为完成
 function setDataSuccess(id) {
-    const shareNewPriceInput = document.getElementById('share-new-price-input');
-    const rawNewPrice = shareNewPriceInput ? String(shareNewPriceInput.value || '').trim() : '';
-    if (rawNewPrice) {
-        const newPrice = sanitizePriceInput(rawNewPrice);
-        if (!newPrice) {
-            top.showMessage('第二次定价格式错误，请输入大于 0 的数字', 3000, 'red');
-            return;
-        }
+    const newPrice = getShareNewPriceEditorValue();
+    if (newPrice === '__INVALID_CUSTOM__') {
+        top.showMessage('自定义价格需大于等于 5.0', 3000, 'red');
+        return;
+    }
+    if (newPrice) {
         updatePriceOnly(id, newPrice, 'new_price', function () {
             doSetDataSuccess(id);
         }, { silent: true });

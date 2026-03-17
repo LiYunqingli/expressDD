@@ -481,6 +481,7 @@
 
         <div class="title">
             取件码: <span id="pickup-code">xx-xx-xxxxx</span>
+            &nbsp;&nbsp;|&nbsp;&nbsp;<span id="pickup-price">价格未公开</span>
         </div>
 
         <!-- 原有卡片（包含图片、上传信息、中奖状态） -->
@@ -628,8 +629,6 @@
                     top.showMessage("分享链接已失效", 1000000, "red");
                     return;
                 }
-                // 更新取件码显示
-                getPickupCode(pid);
                 let xhr = new XMLHttpRequest();
                 xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + pid, true);
                 xhr.onreadystatechange = function () {
@@ -716,6 +715,8 @@
 
             // 读取当天价格是否公开，默认不公开
             loadPricePublishSetting(pid, function () {
+                // 更新取件码和价格显示
+                getPickupCode(pid);
                 // 加载其他快递状态（含中奖状态）
                 loadOtherExpressStatus(pid);
             });
@@ -835,8 +836,8 @@
                 const lotteryStatus = lotteryStatusMap.find(s => s.status === item.lotteryStatus) || lotteryStatusMap[0];
 
                 const tr = document.createElement('tr');
-                const priceNum = Number(item.price);
-                const priceText = sharePricePublic && Number.isFinite(priceNum) && priceNum > 0 ? `￥${priceNum.toFixed(1)}` : '--';
+                const displayPriceNum = Number(item.display_price);
+                const priceText = sharePricePublic && Number.isFinite(displayPriceNum) && displayPriceNum > 0 ? `￥${displayPriceNum.toFixed(1)}` : '--';
                 tr.innerHTML = `
                     <td>${item.expressNo}</td>
                     <td>${item.pickupCode}</td>
@@ -884,6 +885,17 @@
                         let result = JSON.parse(xhr.responseText);
                         if (result.code === 200) {
                             document.getElementById('pickup-code').textContent = result.pickupCode;
+                            const pickupPriceEl = document.getElementById('pickup-price');
+                            if (pickupPriceEl) {
+                                if (!sharePricePublic) {
+                                    pickupPriceEl.textContent = '价格未公开';
+                                } else {
+                                    const displayPriceNum = Number(result.display_price);
+                                    pickupPriceEl.textContent = Number.isFinite(displayPriceNum) && displayPriceNum > 0
+                                        ? `价格: ￥${displayPriceNum.toFixed(1)}`
+                                        : '价格: --';
+                                }
+                            }
                         } else {
                             top.showMessage("获取取件码失败", 5000, "red");
                         }

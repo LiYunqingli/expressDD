@@ -5,31 +5,60 @@
 include 'db.php';
 include 'lib.php';
 
+function calcDisplayPrice($priceRaw, $newPriceRaw)
+{
+    $hasPrice = is_numeric($priceRaw) && floatval($priceRaw) > 0;
+    $hasNewPrice = is_numeric($newPriceRaw) && floatval($newPriceRaw) > 0;
+
+    if ($hasPrice && $hasNewPrice) {
+        return number_format((floatval($priceRaw) + floatval($newPriceRaw)) / 2, 1, '.', '');
+    }
+    if ($hasPrice) {
+        return number_format(floatval($priceRaw), 1, '.', '');
+    }
+    if ($hasNewPrice) {
+        return number_format(floatval($newPriceRaw), 1, '.', '');
+    }
+    return '';
+}
+
 $pid = $_GET['pid'];
 
 if (checkParm($pid)) {
-    $sql = "SELECT pickupCode FROM `data` WHERE id = '$pid'";
+    $sql = "SELECT pickupCode, price, new_price FROM `data` WHERE id = '$pid'";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
         $data = $result->fetch_assoc();
         $pickupCode = $data['pickupCode'];
+        $price = isset($data['price']) ? $data['price'] : '';
+        $newPrice = isset($data['new_price']) ? $data['new_price'] : '';
+        $displayPrice = calcDisplayPrice($price, $newPrice);
         $arr = array(
             "code" => 200,
             "msg" => "获取成功",
-            "pickupCode" => $pickupCode
+            "pickupCode" => $pickupCode,
+            "price" => $price,
+            "new_price" => $newPrice,
+            "display_price" => $displayPrice
         );
-    }else{
+    } else {
         $arr = array(
             "code" => 404,
             "msg" => "未找到该快递",
-            "pickupCode" => ''
+            "pickupCode" => '',
+            "price" => '',
+            "new_price" => '',
+            "display_price" => ''
         );
     }
-}else {
+} else {
     $arr = array(
         "code" => 401,
         "msg" => "参数错误",
-        "pickupCode" => ''
+        "pickupCode" => '',
+        "price" => '',
+        "new_price" => '',
+        "display_price" => ''
     );
 }
 

@@ -469,9 +469,12 @@
                 <div class="share-top-bar">
                     <div class="share-pickup-code">取件码：<span id="share-pickup-code">--</span></div>
                     <div class="share-new-price-box">
-                        <label for="share-new-price-input">第二次定价（￥）</label>
+                        <label for="share-new-price-range">第二次定价（￥）</label>
                         <div class="share-new-price-actions">
-                            <input type="text" id="share-new-price-input" placeholder="例如：1.5">
+                            <input type="range" id="share-new-price-range" min="1.0" max="5.0" step="0.1" value="1.0">
+                            <select id="share-new-price-select"></select>
+                            <input type="number" id="share-new-price-custom" min="5.0" step="0.1"
+                                placeholder="自定义价格（>=5.0）" style="display:none;">
                             <button class="btn btn-primary" id="save-share-new-price-btn" type="button">保存</button>
                         </div>
                     </div>

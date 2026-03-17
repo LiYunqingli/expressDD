@@ -5,6 +5,23 @@
 include 'db.php';
 include 'lib.php';
 
+function calcDisplayPrice($priceRaw, $newPriceRaw)
+{
+    $hasPrice = is_numeric($priceRaw) && floatval($priceRaw) > 0;
+    $hasNewPrice = is_numeric($newPriceRaw) && floatval($newPriceRaw) > 0;
+
+    if ($hasPrice && $hasNewPrice) {
+        return number_format((floatval($priceRaw) + floatval($newPriceRaw)) / 2, 1, '.', '');
+    }
+    if ($hasPrice) {
+        return number_format(floatval($priceRaw), 1, '.', '');
+    }
+    if ($hasNewPrice) {
+        return number_format(floatval($newPriceRaw), 1, '.', '');
+    }
+    return '';
+}
+
 $pid = $_POST['pid'];
 
 if (checkParm($pid)) {
@@ -24,6 +41,8 @@ if (checkParm($pid)) {
                 $id = $data[$i]['id'];
                 $pickupCode = $data[$i]['pickupCode'];
                 $price = $data[$i]['price'];
+                $newPrice = isset($data[$i]['new_price']) ? $data[$i]['new_price'] : '';
+                $displayPrice = calcDisplayPrice($price, $newPrice);
                 if ($status == "未送达") {
                     $status = 0;
                 } else if ($status == "待分享") {
@@ -60,7 +79,9 @@ if (checkParm($pid)) {
                     "deliveryStatus" => $status,
                     "lotteryStatus" => $cjStatus,
                     "pickupCode" => $pickupCode,
-                    "price" => $price
+                    "price" => $price,
+                    "new_price" => $newPrice,
+                    "display_price" => $displayPrice
                 );
             }
             $arr = array(
