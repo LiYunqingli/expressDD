@@ -6,6 +6,7 @@ include 'lib.php';
 $token = isset($_POST['token']) ? $_POST['token'] : '';
 $id = isset($_POST['id']) ? $_POST['id'] : '';
 $price = isset($_POST['price']) ? $_POST['price'] : '';
+$field = isset($_POST['field']) ? $_POST['field'] : 'price';
 
 if (!checkParm($token) || !checkParm($id) || !checkParm($price)) {
     echo json_encode(array(
@@ -31,6 +32,14 @@ if (!is_numeric($price)) {
     exit;
 }
 
+if ($field !== 'price' && $field !== 'new_price') {
+    echo json_encode(array(
+        "code" => 405,
+        "msg" => "不支持的价格字段"
+    ));
+    exit;
+}
+
 $priceNum = floatval($price);
 if ($priceNum <= 0) {
     echo json_encode(array(
@@ -43,8 +52,9 @@ if ($priceNum <= 0) {
 $priceStr = number_format($priceNum, 1, '.', '');
 $idEsc = mysqli_real_escape_string($conn, $id);
 $priceEsc = mysqli_real_escape_string($conn, $priceStr);
+$fieldEsc = mysqli_real_escape_string($conn, $field);
 
-$sql = "UPDATE `data` SET `price` = '$priceEsc', `insert_time` = NOW() WHERE `id` = '$idEsc'";
+$sql = "UPDATE `data` SET `$fieldEsc` = '$priceEsc', `insert_time` = NOW() WHERE `id` = '$idEsc'";
 $result = mysqli_query($conn, $sql);
 
 if ($result) {
@@ -52,7 +62,8 @@ if ($result) {
         echo json_encode(array(
             "code" => 200,
             "msg" => "价格更新成功",
-            "price" => $priceStr
+            "price" => $priceStr,
+            "field" => $field
         ));
     } else {
         echo json_encode(array(

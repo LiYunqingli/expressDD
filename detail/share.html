@@ -606,6 +606,8 @@
 
     <script src="../js/lib.js"></script>
     <script>
+        let sharePricePublic = false;
+
         document.addEventListener('DOMContentLoaded', function () {
             // 元素获取
             const loader = document.querySelector('.loader');
@@ -712,9 +714,40 @@
                 document.documentElement.style.touchAction = '';
             }
 
-            // 加载其他快递状态（含中奖状态）
-            loadOtherExpressStatus(pid);
+            // 读取当天价格是否公开，默认不公开
+            loadPricePublishSetting(pid, function () {
+                // 加载其他快递状态（含中奖状态）
+                loadOtherExpressStatus(pid);
+            });
         });
+
+        function loadPricePublishSetting(pid, callback) {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", $HOST + "/getPricePublishSetting.php?pid=" + encodeURIComponent(pid), true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            let result = JSON.parse(xhr.responseText);
+                            if (result.code === 200) {
+                                sharePricePublic = !!result.isPublic;
+                            } else {
+                                sharePricePublic = false;
+                            }
+                        } catch (e) {
+                            sharePricePublic = false;
+                        }
+                    } else {
+                        sharePricePublic = false;
+                    }
+
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
+                }
+            };
+            xhr.send();
+        }
 
         function getCjName(id) {
             let xhr = new XMLHttpRequest();
@@ -803,7 +836,7 @@
 
                 const tr = document.createElement('tr');
                 const priceNum = Number(item.price);
-                const priceText = Number.isFinite(priceNum) && priceNum > 0 ? `￥${priceNum.toFixed(1)}` : '--';
+                const priceText = sharePricePublic && Number.isFinite(priceNum) && priceNum > 0 ? `￥${priceNum.toFixed(1)}` : '--';
                 tr.innerHTML = `
                     <td>${item.expressNo}</td>
                     <td>${item.pickupCode}</td>

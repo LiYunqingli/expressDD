@@ -58,6 +58,9 @@
                 <button class="setAutoHideBtn" id="setAutoHideBtn" onclick="setAutoHide()">
                     <i class="fas fa-clock"></i> 已开启隐藏
                 </button>
+                <button class="setAutoHideBtn" id="setPricePublicBtn" onclick="togglePricePublishSetting()">
+                    <i class="fas fa-eye-slash"></i> 价格未公开
+                </button>
             </div>
             <div class="action-buttons" id="action-buttons" style="display: none;">
                 <button class="btn btn-success" id="add-record">
@@ -415,7 +418,7 @@
                     <input type="text" id="express-number-edit" placeholder="例如：5678">
                 </div>
                 <div class="form-group">
-                    <label for="price-edit">价格（￥）</label>
+                    <label for="price-edit">一次价格（￥）</label>
                     <input type="text" id="price-edit" placeholder="例如：1.0，留空表示未设置">
                 </div>
                 <div class="form-group">
@@ -456,19 +459,55 @@
 
     <!-- 分享弹窗 -->
     <div class="modal" id="share-modal">
-        <div class="modal-content" style="max-width: 400px;">
+        <div class="modal-content share-modal-content" style="max-width: 760px;">
             <!-- <div class="modal-header">
                 <h2><i class="fas fa-share-alt"></i> 分享取件信息</h2>
                 <button class="close-btn" onclick="closeShareModal()">&times;</button>
             </div> -->
             <div class="modal-body">
                 <p style="margin-bottom: 20px;">请使用以下方式分享取件信息：</p>
+                <div class="share-top-bar">
+                    <div class="share-pickup-code">取件码：<span id="share-pickup-code">--</span></div>
+                    <div class="share-new-price-box">
+                        <label for="share-new-price-input">第二次定价（￥）</label>
+                        <div class="share-new-price-actions">
+                            <input type="text" id="share-new-price-input" placeholder="例如：1.5">
+                            <button class="btn btn-primary" id="save-share-new-price-btn" type="button">保存</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group">
                     <label>取件码图片&nbsp;&nbsp;<a href="#" id="downloadImageLink" download>点击下载图片</a></label>
                     <!-- 用img标签显示图片，隐藏图片地址输入框 -->
                     <img id="shareImage" src="" alt="取件码图片"
                         style="max-width: 100%; border-radius: 5px; border: 1px solid #ddd; padding: 5px;">
 
+                </div>
+                <div class="share-price-summary">
+                    <div class="share-price-summary-title">当天价格明细（含本条）</div>
+                    <div class="share-price-summary-table-wrap">
+                        <table class="share-price-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>取件码</th>
+                                    <th>一价</th>
+                                    <th>二价</th>
+                                    <th>平均值</th>
+                                </tr>
+                            </thead>
+                            <tbody id="share-price-list-body">
+                                <tr>
+                                    <td colspan="4" style="text-align:center;">暂无数据</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" style="text-align:right; font-weight:600;">总计</td>
+                                    <td id="share-price-grand-total">--</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </div>
 

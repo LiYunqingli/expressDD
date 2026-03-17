@@ -1,5 +1,6 @@
 // 全局的数据
 top.data = []
+top.pricePublishSetting = false;
 
 // 全局的数据最新时间
 top.dataLastUpdateTime = "none"; // 初次使用none，获取当天的全部数据
@@ -847,6 +848,67 @@ function getData() {
     xhr.send();
 }
 
+function renderPricePublishButton() {
+    const btn = document.getElementById('setPricePublicBtn');
+    if (!btn) return;
+    if (top.pricePublishSetting) {
+        btn.classList.add('public-on');
+        btn.classList.remove('public-off');
+        btn.innerHTML = '<i class="fas fa-eye"></i> 价格已公开';
+    } else {
+        btn.classList.add('public-off');
+        btn.classList.remove('public-on');
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i> 价格未公开';
+    }
+}
+
+function loadPricePublishSetting(date) {
+    if (!date) return;
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', $HOST + '/getPricePublishSetting.php?token=' + encodeURIComponent(getToken()) + '&date=' + encodeURIComponent(date), true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let result = null;
+            try {
+                result = JSON.parse(xhr.responseText);
+            } catch (e) {
+                return;
+            }
+            if (result.code === 200) {
+                top.pricePublishSetting = !!result.isPublic;
+                renderPricePublishButton();
+            }
+        }
+    };
+    xhr.send();
+}
+
+function togglePricePublishSetting() {
+    const nextValue = top.pricePublishSetting ? 0 : 1;
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', $HOST + '/setPricePublishSetting.php', true);
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let result = null;
+            try {
+                result = JSON.parse(xhr.responseText);
+            } catch (e) {
+                top.showMessage('公开状态更新失败', 3000, 'red');
+                return;
+            }
+            if (result.code === 200) {
+                top.pricePublishSetting = !!result.isPublic;
+                renderPricePublishButton();
+                top.showMessage(result.msg);
+            } else {
+                top.showMessage(result.msg || '公开状态更新失败', 3000, 'red');
+            }
+        }
+    };
+    xhr.send('token=' + encodeURIComponent(getToken()) + '&date=' + encodeURIComponent(dateSelect.value) + '&isPublic=' + encodeURIComponent(nextValue));
+}
+
 //删除所有本地token
 function delAllLocalToken() {
     //删除所有$开头的localStorage
@@ -862,6 +924,7 @@ function delAllLocalToken() {
 function init() {
     initPriceEditor();
     setToday();
+    loadPricePublishSetting(dateSelect.value);
     loadBuilding();
     getData();
     // 标签切换事件
@@ -923,6 +986,7 @@ function init() {
         localStorage.setItem(localKey, dateSelect.value);
         updateUrlParam("localToken", localKey);
         setTotalNum();
+        loadPricePublishSetting(dateSelect.value);
         getData();//更新数据
     });
 
@@ -1096,6 +1160,11 @@ function formatPriceDisplay(raw) {
     return normalized ? `￥${normalized}` : '--';
 }
 
+function formatPricePlain(raw) {
+    const normalized = normalizePriceValue(raw);
+    return normalized ? normalized : '--';
+}
+
 function initPriceEditor() {
     if (priceEditor) return;
     const options = buildPriceOptions();
@@ -1156,18 +1225,26 @@ function initPriceEditor() {
         range,
         select,
         custom,
-        targetId: null
+        targetId: null,
+        targetField: 'price',
+        onSaved: null,
+        silent: false
     };
 }
 
-function openPriceEditor(id) {
+function openPriceEditor(id, field = 'price', options = {}) {
     const record = top.data.find(item => String(item.id) === String(id));
     if (!record) {
         top.showMessage('未找到对应记录', 3000, 'red');
         return;
     }
-    const value = normalizePriceValue(record.price) || '1.0';
+
+    const currentRaw = field === 'new_price' ? record.new_price : record.price;
+    const value = normalizePriceValue(currentRaw) || '1.0';
     priceEditor.targetId = String(id);
+    priceEditor.targetField = field === 'new_price' ? 'new_price' : 'price';
+    priceEditor.onSaved = typeof options.onSaved === 'function' ? options.onSaved : null;
+    priceEditor.silent = !!options.silent;
     priceEditor.range.value = value;
     if (Number(value) <= 5) {
         priceEditor.select.value = value;
@@ -1185,6 +1262,9 @@ function closePriceEditor() {
     if (!priceEditor) return;
     priceEditor.overlay.classList.remove('show');
     priceEditor.targetId = null;
+    priceEditor.targetField = 'price';
+    priceEditor.onSaved = null;
+    priceEditor.silent = false;
 }
 
 function savePriceEditor() {
@@ -1206,10 +1286,12 @@ function savePriceEditor() {
         return;
     }
 
-    updatePriceOnly(priceEditor.targetId, value);
+    updatePriceOnly(priceEditor.targetId, value, priceEditor.targetField, priceEditor.onSaved, { silent: priceEditor.silent });
 }
 
-function updatePriceOnly(id, price) {
+function updatePriceOnly(id, price, field = 'price', onSuccess = null, options = {}) {
+    const safeField = field === 'new_price' ? 'new_price' : 'price';
+    const silent = !!(options && options.silent);
     const xhr = new XMLHttpRequest();
     xhr.open('POST', $HOST + '/setDataPrice.php', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -1226,25 +1308,115 @@ function updatePriceOnly(id, price) {
             if (xhr.status === 200 && result.code === 200) {
                 const target = top.data.find(item => String(item.id) === String(id));
                 if (target) {
-                    target.price = price;
+                    target[safeField] = price;
                 }
-                const row = document.getElementById('_' + id);
-                if (row) {
-                    const cell = row.querySelector('[data-role="price-cell"]');
-                    if (cell) {
-                        cell.textContent = formatPriceDisplay(price);
-                        cell.classList.remove('empty');
+
+                if (safeField === 'price') {
+                    const row = document.getElementById('_' + id);
+                    if (row) {
+                        const cell = row.querySelector('[data-role="price-cell"]');
+                        if (cell) {
+                            cell.textContent = formatPriceDisplay(price);
+                            cell.classList.remove('empty');
+                        }
                     }
                 }
-                top.showMessage(result.msg || '价格更新成功');
+
+                if (!silent) {
+                    top.showMessage(result.msg || '价格更新成功');
+                }
                 closePriceEditor();
+                if (typeof onSuccess === 'function') {
+                    onSuccess(price, safeField);
+                }
             } else {
                 top.showMessage((result && result.msg) ? result.msg : '价格更新失败', 3000, 'red');
             }
         }
     };
-    xhr.send(`token=${encodeURIComponent(getToken())}&id=${encodeURIComponent(id)}&price=${encodeURIComponent(price)}`);
+    xhr.send(`token=${encodeURIComponent(getToken())}&id=${encodeURIComponent(id)}&price=${encodeURIComponent(price)}&field=${encodeURIComponent(safeField)}`);
 }
+
+function renderSharePriceSummary(list, totals, currentId) {
+    const body = document.getElementById('share-price-list-body');
+    const grandTotalEl = document.getElementById('share-price-grand-total');
+    if (!body || !grandTotalEl) return;
+
+    body.innerHTML = '';
+    if (!Array.isArray(list) || list.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center;">暂无数据</td></tr>';
+        grandTotalEl.textContent = '--';
+        return;
+    }
+
+    list.forEach(item => {
+        const tr = document.createElement('tr');
+        if (String(item.id) === String(currentId)) {
+            tr.classList.add('current-row');
+        }
+        tr.innerHTML = `
+            <td>${item.pickupCode || '--'}</td>
+            <td class="editable-price" data-edit-field="price" data-id="${item.id}">${formatPricePlain(item.price)}</td>
+            <td class="editable-price" data-edit-field="new_price" data-id="${item.id}">${formatPricePlain(item.new_price)}</td>
+            <td>${formatPricePlain(item.avg)}</td>
+        `;
+        body.appendChild(tr);
+    });
+
+    const totalPrice = Number(totals.totalPrice || 0);
+    const totalNewPrice = Number(totals.totalNewPrice || 0);
+    const grandTotal = Number(totals.grandTotal || 0);
+    // grandTotalEl.textContent = `￥${grandTotal.toFixed(1)}（一价合计 ${totalPrice.toFixed(1)} + 二价合计 ${totalNewPrice.toFixed(1)}）`;
+    grandTotalEl.textContent = `￥${grandTotal.toFixed(1)}`;
+}
+
+function loadSharePriceSummary(pid) {
+    if (!pid) return;
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', $HOST + '/getUserDayPriceList.php?token=' + encodeURIComponent(getToken()) + '&pid=' + encodeURIComponent(pid), true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            let result = null;
+            try {
+                result = JSON.parse(xhr.responseText);
+            } catch (e) {
+                return;
+            }
+            if (result.code === 200) {
+                renderSharePriceSummary(result.data || [], {
+                    totalPrice: result.totalPrice,
+                    totalNewPrice: result.totalNewPrice,
+                    grandTotal: result.grandTotal
+                }, pid);
+            } else {
+                renderSharePriceSummary([], {}, pid);
+            }
+        }
+    };
+    xhr.send();
+}
+
+document.addEventListener('click', function (evt) {
+    const target = evt.target;
+    if (!target || !target.closest) return;
+    const editableCell = target.closest('#share-price-list-body .editable-price');
+    if (!editableCell) return;
+    const id = editableCell.getAttribute('data-id');
+    const field = editableCell.getAttribute('data-edit-field') || 'price';
+    if (!id) return;
+    openPriceEditor(id, field, {
+        onSaved: function () {
+            loadSharePriceSummary(top.upload_image_data_id);
+            const currentRecord = top.data.find(item => String(item.id) === String(top.upload_image_data_id));
+            if (currentRecord) {
+                const input = document.getElementById('share-new-price-input');
+                if (input) {
+                    input.value = normalizePriceValue(currentRecord.new_price) || '';
+                }
+            }
+        }
+    });
+});
 
 // 导出所有数据到xlsx（支持URL下载）
 function exportData() {
@@ -1543,9 +1715,47 @@ function statusClick(status, id) {
         document.getElementById("uploadImageInput").click();
     } else if (status == "待分享" || status == "已完成") {
 
-        let _building_users_id = top.data.find(item => item.id === id);
+        let _building_users_id = top.data.find(item => String(item.id) === String(id));
+        if (!_building_users_id) {
+            top.showMessage('未找到对应快递', 3000, 'red');
+            return;
+        }
+        const currentRecord = _building_users_id;
         _building_users_id = _building_users_id.building_users_id;
         let wechatName = _building_users_id.split(":")[_building_users_id.split(":").length - 1].trim();
+
+        const pickupCodeEl = document.getElementById('share-pickup-code');
+        if (pickupCodeEl) {
+            pickupCodeEl.textContent = currentRecord.pickupCode || '--';
+        }
+        const shareNewPriceInput = document.getElementById('share-new-price-input');
+        if (shareNewPriceInput) {
+            shareNewPriceInput.value = normalizePriceValue(currentRecord.new_price) || '';
+        }
+        const saveNewPriceBtn = document.getElementById('save-share-new-price-btn');
+        if (saveNewPriceBtn) {
+            saveNewPriceBtn.onclick = function () {
+                const raw = shareNewPriceInput ? shareNewPriceInput.value : '';
+                const val = sanitizePriceInput(raw);
+                if (String(raw).trim() !== '' && !val) {
+                    top.showMessage('第二次定价格式错误，请输入大于 0 的数字', 3000, 'red');
+                    return;
+                }
+                if (!val) {
+                    top.showMessage('请输入第二次定价', 3000, 'red');
+                    return;
+                }
+                updatePriceOnly(id, val, 'new_price', function () {
+                    if (shareNewPriceInput) {
+                        shareNewPriceInput.value = val;
+                    }
+                    loadSharePriceSummary(id);
+                });
+            };
+        }
+
+        loadSharePriceSummary(id);
+
         let xhr = new XMLHttpRequest();
         xhr.open("GET", $HOST + "/getImgDetail.php?pid=" + id, true);
         xhr.onreadystatechange = function () {
@@ -1613,6 +1823,24 @@ function closeShareModal() {
 
 // 设置当前快递为完成
 function setDataSuccess(id) {
+    const shareNewPriceInput = document.getElementById('share-new-price-input');
+    const rawNewPrice = shareNewPriceInput ? String(shareNewPriceInput.value || '').trim() : '';
+    if (rawNewPrice) {
+        const newPrice = sanitizePriceInput(rawNewPrice);
+        if (!newPrice) {
+            top.showMessage('第二次定价格式错误，请输入大于 0 的数字', 3000, 'red');
+            return;
+        }
+        updatePriceOnly(id, newPrice, 'new_price', function () {
+            doSetDataSuccess(id);
+        }, { silent: true });
+        return;
+    }
+
+    doSetDataSuccess(id);
+}
+
+function doSetDataSuccess(id) {
     // clickOKisAll
     let clickOKisAll = document.getElementById("clickOKisAll").checked; // 是否全部完成(同一个人都是待分享同一天)
     let xhr = new XMLHttpRequest();
