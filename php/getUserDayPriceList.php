@@ -64,9 +64,24 @@ $totalNewPrice = 0;
 
 if ($res && $res->num_rows > 0) {
     while ($row = $res->fetch_assoc()) {
-        $priceNum = is_numeric($row['price']) ? floatval($row['price']) : 0;
-        $newPriceNum = is_numeric($row['new_price']) ? floatval($row['new_price']) : 0;
-        $avg = ($priceNum + $newPriceNum) / 2;
+        $hasPrice = is_numeric($row['price']);
+        $hasNewPrice = is_numeric($row['new_price']);
+
+        $priceNum = $hasPrice ? floatval($row['price']) : 0;
+        $newPriceNum = $hasNewPrice ? floatval($row['new_price']) : 0;
+
+        // 计算平均值规则：
+        // - 只有一价和二价都不为空（is_numeric）时才取平均
+        // - 任意一个为空时，平均值使用“原价”（即已填写的那一个价格）
+        // - 两个都为空时，平均值返回空字符串（前端显示 --）
+        $avgStr = '';
+        if ($hasPrice && $hasNewPrice) {
+            $avgStr = number_format(($priceNum + $newPriceNum) / 2, 1, '.', '');
+        } elseif ($hasPrice) {
+            $avgStr = number_format($priceNum, 1, '.', '');
+        } elseif ($hasNewPrice) {
+            $avgStr = number_format($newPriceNum, 1, '.', '');
+        }
 
         $totalPrice += $priceNum;
         $totalNewPrice += $newPriceNum;
@@ -76,7 +91,7 @@ if ($res && $res->num_rows > 0) {
             "pickupCode" => $row['pickupCode'],
             "price" => $row['price'],
             "new_price" => $row['new_price'],
-            "avg" => number_format($avg, 1, '.', '')
+            "avg" => $avgStr
         );
     }
 }
