@@ -8,7 +8,7 @@
 include 'db.php';
 include 'lib.php';
 
-if(checkParm($_POST['url']) && checkParm($_POST['detail'])){
+if (checkParm($_POST['url']) && checkParm($_POST['detail'])) {
     $url = $_POST['url'];
     $detail = $_POST['detail'];
     $ip = getClientIp();
@@ -19,18 +19,18 @@ if(checkParm($_POST['url']) && checkParm($_POST['detail'])){
     $stmt->bind_param("ssss", $url, $detail, $ip, $ua);
     $res = $stmt->execute();
 
-    if($res){
+    if ($res) {
         $arr = array(
             "code" => 200,
             "msg" => "日志记录成功"
         );
-    }else{
+    } else {
         $arr = array(
             "code" => 500,
             "msg" => "日志记录失败"
         );
     }
-}else{
+} else {
     $arr = array(
         "code" => 403,
         "msg" => "参数错误，不记录日志"
