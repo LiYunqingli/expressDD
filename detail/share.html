@@ -467,6 +467,24 @@
             margin: 5px 0;
         }
 
+        .title .calc-rule {
+            margin-top: 6px;
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+
+        .self-tag {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            background: #6a11cb;
+            color: #fff;
+            vertical-align: middle;
+        }
+
         @media (min-width: 768px) {
             .title {
                 font-size: 1.2rem;
@@ -480,8 +498,12 @@
     <div class="container">
 
         <div class="title">
-            取件码: <span id="pickup-code">xx-xx-xxxxx</span>
-            &nbsp;&nbsp;|&nbsp;&nbsp;<span id="pickup-price">价格未公开</span>
+            今日快递数量: <span id="today-count">--</span>
+            &nbsp;&nbsp;|&nbsp;&nbsp;总金额: <span id="today-total">--</span>
+            <!-- <div class="calc-rule" id="total-calc-rule">
+                总金额计算：每单金额 = (一价 + 二价) / 2（两者都有且 &gt; 0）；若一价为空/≤0，则用二价；若二价为空/≤0，则用一价；若一价、二价都为空/≤0，则本单金额临时不计入，后续补充。总金额 =
+                所有每单金额之和。
+            </div> -->
         </div>
 
         <!-- 原有卡片（包含图片、上传信息、中奖状态） -->
@@ -563,7 +585,7 @@
         <!-- 其他快递送达状态板块（含中奖状态列） -->
         <div class="other-express">
             <h2 class="section-title">
-                <i class="fas fa-box-open"></i> 其他快递送达状态
+                <i class="fas fa-box-open"></i> 今日快递送达状态
             </h2>
             <!-- 表格容器（核心适配：移动端横向滚动） -->
             <div class="express-table-container">
@@ -608,6 +630,7 @@
     <script src="../js/lib.js"></script>
     <script>
         let sharePricePublic = false;
+        let currentLotteryStatus = 1;
 
         document.addEventListener('DOMContentLoaded', function () {
             // 元素获取
@@ -641,6 +664,7 @@
                                 // let cj = imgData.cj;
                                 // 设置当前快递中奖状态（对接API时替换模拟值）
                                 const lotteryStatus = imgData.cj; // 1=无活动,2=中奖,3=未中奖,4=等待开奖
+                                currentLotteryStatus = Number(lotteryStatus) || 1;
                                 const statusTextMap = {
                                     1: "今日没有抽奖活动",
                                     2: "中奖",
@@ -669,6 +693,11 @@
 
                                 // 设置模态框图片
                                 modalImage.src = imgURL;
+
+                                // 读取当天价格是否公开，默认不公开
+                                loadPricePublishSetting(pid, function () {
+                                    loadTodayExpressAndRender(pid);
+                                });
 
                             } else {
                                 top.showMessage("分享链接已失效", 1000000, "red");
@@ -713,14 +742,142 @@
                 document.documentElement.style.touchAction = '';
             }
 
-            // 读取当天价格是否公开，默认不公开
-            loadPricePublishSetting(pid, function () {
-                // 更新取件码和价格显示
-                getPickupCode(pid);
-                // 加载其他快递状态（含中奖状态）
-                loadOtherExpressStatus(pid);
-            });
+            // 汇总与表格渲染放到 getImgDetail 成功后执行，确保 currentLotteryStatus 已拿到
         });
+
+        function toPositiveNumber(value) {
+            const num = Number(value);
+            return Number.isFinite(num) && num > 0 ? num : null;
+        }
+
+        function calcDisplayPriceNumber(priceRaw, newPriceRaw) {
+            const price = toPositiveNumber(priceRaw);
+            const newPrice = toPositiveNumber(newPriceRaw);
+
+            if (price !== null && newPrice !== null) {
+                return (price + newPrice) / 2;
+            }
+            if (price !== null) {
+                return price;
+            }
+            if (newPrice !== null) {
+                return newPrice;
+            }
+            return 0;
+        }
+
+        function mapDeliveryStatus(statusText) {
+            if (statusText === '未送达') return 0;
+            if (statusText === '待分享') return 1;
+            if (statusText === '已完成') return 2;
+            return 0;
+        }
+
+        function setTodaySummary(todayList) {
+            const countEl = document.getElementById('today-count');
+            const totalEl = document.getElementById('today-total');
+
+            countEl.textContent = String(todayList.length);
+
+            const total = todayList.reduce((sum, item) => {
+                return sum + calcDisplayPriceNumber(item.price, item.new_price);
+            }, 0);
+
+            if (!sharePricePublic) {
+                totalEl.textContent = '价格未公开';
+            } else {
+                totalEl.textContent = `￥${total.toFixed(1)}`;
+            }
+        }
+
+        function fetchCurrentExpress(pid, callback) {
+            let xhr = new XMLHttpRequest();
+            xhr.open("GET", $HOST + "/getPickupCode.php?pid=" + encodeURIComponent(pid), true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status !== 200) {
+                    callback(new Error('网络请求失败'));
+                    return;
+                }
+                let result;
+                try {
+                    result = JSON.parse(xhr.responseText);
+                } catch (e) {
+                    callback(new Error('返回数据解析失败'));
+                    return;
+                }
+                if (result.code !== 200) {
+                    callback(new Error(result.msg || '获取本条快递信息失败'));
+                    return;
+                }
+
+                callback(null, {
+                    expressNo: pid,
+                    pickupCode: result.pickupCode,
+                    deliveryStatus: mapDeliveryStatus(result.status),
+                    lotteryStatus: currentLotteryStatus,
+                    price: result.price,
+                    new_price: result.new_price,
+                    display_price: result.display_price,
+                    isCurrent: true
+                });
+            };
+            xhr.send();
+        }
+
+        function fetchOtherExpress(pid, callback) {
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", $HOST + "/getCjData.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) return;
+                if (xhr.status !== 200) {
+                    callback(new Error('网络请求失败'));
+                    return;
+                }
+                let result;
+                try {
+                    result = JSON.parse(xhr.responseText);
+                } catch (e) {
+                    callback(new Error('返回数据解析失败'));
+                    return;
+                }
+
+                if (result.code === 200) {
+                    callback(null, result.data || []);
+                    return;
+                }
+                if (result.code === 201) {
+                    callback(null, []);
+                    return;
+                }
+                callback(new Error(result.msg || '获取今日快递列表失败'));
+            };
+            xhr.send("pid=" + encodeURIComponent(pid));
+        }
+
+        function loadTodayExpressAndRender(pid) {
+            const expressListEl = document.getElementById('express-list');
+
+            fetchCurrentExpress(pid, function (err, currentExpress) {
+                if (err) {
+                    top.showMessage(err.message || '获取本条快递信息失败', 5000, 'red');
+                    return;
+                }
+
+                fetchOtherExpress(pid, function (err2, otherList) {
+                    if (err2) {
+                        top.showMessage(err2.message || '获取今日快递列表失败', 5000, 'red');
+                        otherList = [];
+                    }
+
+                    const todayList = [currentExpress].concat(Array.isArray(otherList) ? otherList : []);
+                    setTodaySummary(todayList);
+                    renderExpressTable(todayList, expressListEl);
+                });
+            });
+        }
 
         function loadPricePublishSetting(pid, callback) {
             let xhr = new XMLHttpRequest();
@@ -770,57 +927,22 @@
         /**
          * 加载其他快递状态（含中奖状态，后期对接API）
          */
-        function loadOtherExpressStatus(pid) {
-            const expressListEl = document.getElementById('express-list');
-            // 1. 真实场景下替换为API请求（示例接口地址）
-            let xhr = new XMLHttpRequest();
-            xhr.open("POST", $HOST + "/getCjData.php", true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    let expressData = JSON.parse(xhr.responseText);
-                    if (expressData.code == 200) {
-                        top.showMessage(expressData.msg);
-                        expressData = expressData.data;
-                        renderExpressTable(expressData, expressListEl); // 渲染表格
-                    } else if (expressData.code == 201) {
-                        top.showMessage(expressData.msg);
-                    } else {
-                        top.showMessage(expressData.msg, 3000, 'red');
-                    }
-                }
-            };
-            xhr.send("pid=" + pid);
-
-            // 2. 模拟API返回数据（包含快递状态+中奖状态）
-            // const mockExpressData = [
-            //     {
-            //         expressNo: "YT20250825001",
-            //         deliveryStatus: 0, // 0=未送达,1=已送达-等待通知,2=已送达-已通知
-            //         lotteryStatus: 2   // 1=无活动,2=中奖,3=未中奖,4=等待开奖
-            //     },
-            //     { expressNo: "SF13820250825", deliveryStatus: 1, lotteryStatus: 3 },
-            //     { expressNo: "ZT88820250825", deliveryStatus: 2, lotteryStatus: 4 },
-            //     { expressNo: "YD66620250825", deliveryStatus: 0, lotteryStatus: 1 }
-            // ];
-            // 3. 渲染表格（真实场景用接口返回的expressData）
-            // renderExpressTable(mockExpressData, expressListEl);
-        }
+        // loadOtherExpressStatus 已由 loadTodayExpressAndRender 取代
 
         /**
-         * 渲染其他快递状态表格（含中奖状态列）
+         * 渲染今日快递状态表格（含中奖状态列）
          * @param {Array} data - 快递数据数组（含配送状态+中奖状态）
          * @param {HTMLElement} container - 表格容器
          */
         function renderExpressTable(data, container) {
-            container.innerHTML = ''; // 清空原有内容
-            // 1. 配送状态映射（与CSS类对应）
+            container.innerHTML = '';
+
             const deliveryStatusMap = [
                 { text: "未送达", class: "unreceived" },
                 { text: "已送达-等待通知", class: "wait-notify" },
                 { text: "已送达-已通知", class: "notified" }
             ];
-            // 2. 中奖状态映射（文本+图标+CSS类）
+
             const lotteryStatusMap = [
                 { text: "今日没有抽奖活动", icon: "info", status: 1 },
                 { text: "中奖", icon: "gift", status: 2 },
@@ -828,19 +950,29 @@
                 { text: "等待开奖", icon: "clock", status: 4 }
             ];
 
-            // 3. 循环生成表格行
+            if (!Array.isArray(data) || data.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="6" style="text-align: center;">没有找到今日快递数据</td>`;
+                container.appendChild(tr);
+                return;
+            }
+
             data.forEach(item => {
-                // 获取配送状态（默认未送达）
                 const deliveryStatus = deliveryStatusMap[item.deliveryStatus] || deliveryStatusMap[0];
-                // 获取中奖状态（默认无活动）
-                const lotteryStatus = lotteryStatusMap.find(s => s.status === item.lotteryStatus) || lotteryStatusMap[0];
+                const lotteryStatus = lotteryStatusMap.find(s => s.status === Number(item.lotteryStatus)) || lotteryStatusMap[0];
 
                 const tr = document.createElement('tr');
                 const displayPriceNum = Number(item.display_price);
-                const priceText = sharePricePublic && Number.isFinite(displayPriceNum) && displayPriceNum > 0 ? `￥${displayPriceNum.toFixed(1)}` : '--';
+                const priceText = sharePricePublic && Number.isFinite(displayPriceNum) && displayPriceNum > 0
+                    ? `￥${displayPriceNum.toFixed(1)}`
+                    : '--';
+                const expressNoText = item.isCurrent
+                    ? `${item.expressNo}<span class="self-tag">本条数据</span>`
+                    : item.expressNo;
+
                 tr.innerHTML = `
-                    <td>${item.expressNo}</td>
-                    <td>${item.pickupCode}</td>
+                    <td>${expressNoText}</td>
+                    <td>${item.pickupCode || ''}</td>
                     <td><span class="status-tag ${deliveryStatus.class}">${deliveryStatus.text}</span></td>
                     <td>${priceText}</td>
                     <td>
@@ -852,59 +984,6 @@
                 `;
                 container.appendChild(tr);
             });
-        }
-
-        /**
-         * 查看快递详情（适配移动端触摸反馈）
-         * @param {string} expressNo - 快递编号
-         */
-        function viewExpressDetail(expressNo) {
-            // 真实场景：请求该快递的详情接口（含配送轨迹、中奖详情等）
-            // alert(`查看快递 ${expressNo} 的详情（可在此处扩展显示中奖规则、领奖方式等）`);
-            top.showMessage("暂不支持查看快递详情", 5000, 'red');
-            // 示例：打开详情模态框（移动端建议用底部弹窗，而非全屏模态框）
-            // openExpressDetailModal(expressNo);
-        }
-
-        /**
-         * （可选）打开快递详情模态框（移动端建议用底部弹窗样式）
-         * @param {string} expressNo - 快递编号
-         */
-        function openExpressDetailModal(expressNo) {
-            // 移动端优化：使用底部滑出弹窗，而非全屏模态框
-            // 此处可添加底部弹窗的创建和渲染逻辑
-        }
-
-        function getPickupCode(pid) {
-            let xhr = new XMLHttpRequest();
-            xhr.open("GET", $HOST + "/getPickupCode.php?pid=" + pid, true);
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
-                        let result = JSON.parse(xhr.responseText);
-                        if (result.code === 200) {
-                            document.getElementById('pickup-code').textContent = result.pickupCode;
-                            const pickupPriceEl = document.getElementById('pickup-price');
-                            if (pickupPriceEl) {
-                                if (!sharePricePublic) {
-                                    pickupPriceEl.textContent = '价格未公开';
-                                } else {
-                                    const displayPriceNum = Number(result.display_price);
-                                    pickupPriceEl.textContent = Number.isFinite(displayPriceNum) && displayPriceNum > 0
-                                        ? `价格: ￥${displayPriceNum.toFixed(1)}`
-                                        : '价格: --';
-                                }
-                            }
-                        } else {
-                            top.showMessage("获取取件码失败", 5000, "red");
-                        }
-                    } else {
-                        top.showMessage("网络请求失败，请刷新重试", 5000, "red");
-                    }
-                }
-            };
-            xhr.send();
         }
 
         // 记录页面访问日志

@@ -25,13 +25,14 @@ function calcDisplayPrice($priceRaw, $newPriceRaw)
 $pid = $_GET['pid'];
 
 if (checkParm($pid)) {
-    $sql = "SELECT pickupCode, price, new_price FROM `data` WHERE id = '$pid'";
+    $sql = "SELECT pickupCode, price, new_price, status FROM `data` WHERE id = '$pid'";
     $result = $conn->query($sql);
     if ($result->num_rows > 0) {
         $data = $result->fetch_assoc();
         $pickupCode = $data['pickupCode'];
         $price = isset($data['price']) ? $data['price'] : '';
         $newPrice = isset($data['new_price']) ? $data['new_price'] : '';
+        $status = isset($data['status']) ? $data['status'] : '';
         $displayPrice = calcDisplayPrice($price, $newPrice);
         $arr = array(
             "code" => 200,
@@ -39,7 +40,8 @@ if (checkParm($pid)) {
             "pickupCode" => $pickupCode,
             "price" => $price,
             "new_price" => $newPrice,
-            "display_price" => $displayPrice
+            "display_price" => $displayPrice,
+            "status" => $status
         );
     } else {
         $arr = array(
@@ -48,7 +50,8 @@ if (checkParm($pid)) {
             "pickupCode" => '',
             "price" => '',
             "new_price" => '',
-            "display_price" => ''
+            "display_price" => '',
+            "status" => ''
         );
     }
 } else {
@@ -58,7 +61,8 @@ if (checkParm($pid)) {
         "pickupCode" => '',
         "price" => '',
         "new_price" => '',
-        "display_price" => ''
+        "display_price" => '',
+        "status" => ''
     );
 }
 
