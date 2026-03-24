@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>价格统计分析</title>
+    <link rel="stylesheet" href="../../css/message-box.css">
+    <script src="../../js/chart.js"></script>
+    <script src="../../js/showMessage.js"></script>
+    <script src="../../js/lib.js"></script>
+    <style>
+        :root {
+            --bg: #f3f5f8;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --brand: #0f766e;
+            --brand-soft: #ccfbf1;
+            --accent: #0369a1;
+            --warn: #c2410c;
+            --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: radial-gradient(circle at top right, #d1fae5 0%, var(--bg) 42%, #e2e8f0 100%);
+            color: var(--text);
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        }
+
+        .container {
+            width: min(1200px, 94vw);
+            margin: 24px auto 36px;
+        }
+
+        .header {
+            background: linear-gradient(120deg, #0f766e 0%, #0369a1 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 20px 20px 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .header p {
+            margin: 8px 0 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .toolbar {
+            margin-top: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .toolbar label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .toolbar select,
+        .toolbar button {
+            border: 0;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .toolbar select {
+            min-width: 160px;
+            color: var(--text);
+        }
+
+        .toolbar button {
+            background: #fff;
+            color: var(--brand);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .metrics {
+            display: grid;
+            margin-top: 16px;
+            gap: 12px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .metric {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 14px;
+            border: 1px solid var(--line);
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+        }
+
+        .metric .label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .metric .value {
+            margin-top: 6px;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--brand);
+        }
+
+        .charts {
+            margin-top: 14px;
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            padding: 14px;
+        }
+
+        .card h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: #0f172a;
+        }
+
+        .canvas-wrap {
+            height: 320px;
+        }
+
+        .table-wrap {
+            margin-top: 12px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid var(--line);
+            padding: 10px 8px;
+            text-align: left;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #334155;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .tag {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            background: var(--brand-soft);
+            color: var(--brand);
+        }
+
+        .empty {
+            color: var(--muted);
+            text-align: center;
+            padding: 24px 0;
+        }
+
+        @media (max-width: 980px) {
+            .metrics {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .charts {
+                grid-template-columns: 1fr;
+            }
+
+            .canvas-wrap {
+                height: 280px;
+            }
+        }
+
+        @media (max-width: 560px) {
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .metric .value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <section class="header">
+            <h1>价格统计分析</h1>
+            <p>按天聚合价格数据，展示总体金额、单日趋势与件数走势。</p>
+            <div class="toolbar">
+                <label for="monthFilter">按月份筛选</label>
+                <select id="monthFilter">
+                    <option value="all">全部月份</option>
+                </select>
+                <button id="refreshBtn" type="button">刷新数据</button>
+                <span class="tag" id="updatedTag">最近更新时间：-</span>
+            </div>
+        </section>
+
+        <section class="metrics">
+            <article class="metric">
+                <div class="label">总快递件数</div>
+                <div class="value" id="totalCount">0</div>
+            </article>
+            <article class="metric">
+                <div class="label">一价合计</div>
+                <div class="value" id="totalPrice">0.0</div>
+            </article>
+            <article class="metric">
+                <div class="label">二价合计</div>
+                <div class="value" id="totalNewPrice">0.0</div>
+            </article>
+            <article class="metric">
+                <div class="label">综合金额（两价和）</div>
+                <div class="value" id="grandTotal">0.0</div>
+            </article>
+        </section>
+
+        <section class="charts">
+            <article class="card">
+                <h3>每日金额走势图</h3>
+                <div class="canvas-wrap">
+                    <canvas id="amountTrendChart"></canvas>
+                </div>
+            </article>
+            <article class="card">
+                <h3>每日件数走势</h3>
+                <div class="canvas-wrap">
+                    <canvas id="countTrendChart"></canvas>
+                </div>
+            </article>
+        </section>
+
+        <section class="card table-wrap">
+            <h3>每日价格明细</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>件数</th>
+                        <th>一价合计</th>
+                        <th>二价合计</th>
+                        <th>综合金额</th>
+                        <th>单件均值</th>
+                    </tr>
+                </thead>
+                <tbody id="dailyTableBody">
+                    <tr>
+                        <td colspan="6" class="empty">暂无数据</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+
+    <script>
+        let rawRows = [];
+        let amountTrendChart = null;
+        let countTrendChart = null;
+
+        function isNumericValue(value) {
+            return value !== null && value !== "" && !isNaN(Number(value));
+        }
+
+        function toNumber(value) {
+            return isNumericValue(value) ? Number(value) : 0;
+        }
+
+        function formatMoney(value) {
+            return Number(value).toFixed(1);
+        }
+
+        function aggregateByDay(rows) {
+            const map = {};
+
+            rows.forEach((item) => {
+                if (!item || !item.time) {
+                    return;
+                }
+
+                const day = String(item.time).slice(0, 10);
+                if (!day) {
+                    return;
+                }
+
+                if (!map[day]) {
+                    map[day] = {
+                        day,
+                        count: 0,
+                        totalPrice: 0,
+                        totalNewPrice: 0,
+                        grandTotal: 0
+                    };
+                }
+
+                const p = toNumber(item.price);
+                const np = toNumber(item.new_price);
+
+                map[day].count += 1;
+                map[day].totalPrice += p;
+                map[day].totalNewPrice += np;
+                map[day].grandTotal += p + np;
+            });
+
+            return Object.values(map).sort((a, b) => a.day.localeCompare(b.day));
+        }
+
+        function buildMonthFilterOptions(dayStats) {
+            const monthSet = new Set();
+            dayStats.forEach((row) => {
+                monthSet.add(row.day.slice(0, 7));
+            });
+
+            const months = Array.from(monthSet).sort();
+            const html = ['<option value="all">全部月份</option>'];
+            months.forEach((month) => {
+                html.push(`<option value="${month}">${month}</option>`);
+            });
+
+            document.getElementById("monthFilter").innerHTML = html.join("");
+        }
+
+        function filterByMonth(dayStats, month) {
+            if (!month || month === "all") {
+                return dayStats;
+            }
+            return dayStats.filter((row) => row.day.startsWith(month));
+        }
+
+        function updateMetrics(dayStats) {
+            const summary = dayStats.reduce((acc, row) => {
+                acc.count += row.count;
+                acc.totalPrice += row.totalPrice;
+                acc.totalNewPrice += row.totalNewPrice;
+                acc.grandTotal += row.grandTotal;
+                return acc;
+            }, {
+                count: 0,
+                totalPrice: 0,
+                totalNewPrice: 0,
+                grandTotal: 0
+            });
+
+            document.getElementById("totalCount").textContent = summary.count;
+            document.getElementById("totalPrice").textContent = formatMoney(summary.totalPrice);
+            document.getElementById("totalNewPrice").textContent = formatMoney(summary.totalNewPrice);
+            document.getElementById("grandTotal").textContent = formatMoney(summary.grandTotal);
+        }
+
+        function renderDailyTable(dayStats) {
+            const tbody = document.getElementById("dailyTableBody");
+            if (!dayStats.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty">筛选条件下暂无数据</td></tr>';
+                return;
+            }
+
+            const html = dayStats.map((row) => {
+                const avg = row.count ? row.grandTotal / row.count : 0;
+                return `
+                    <tr>
+                        <td>${row.day}</td>
+                        <td>${row.count}</td>
+                        <td>${formatMoney(row.totalPrice)}</td>
+                        <td>${formatMoney(row.totalNewPrice)}</td>
+                        <td>${formatMoney(row.grandTotal)}</td>
+                        <td>${formatMoney(avg)}</td>
+                    </tr>
+                `;
+            }).join("");
+
+            tbody.innerHTML = html;
+        }
+
+        function renderAmountTrend(dayStats) {
+            const labels = dayStats.map((row) => row.day);
+            const firstPrice = dayStats.map((row) => Number(formatMoney(row.totalPrice)));
+            const secondPrice = dayStats.map((row) => Number(formatMoney(row.totalNewPrice)));
+            const grandTotal = dayStats.map((row) => Number(formatMoney(row.grandTotal)));
+
+            const ctx = document.getElementById("amountTrendChart").getContext("2d");
+            if (amountTrendChart) {
+                amountTrendChart.destroy();
+            }
+
+            amountTrendChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: "一价",
+                            data: firstPrice,
+                            borderColor: "#0f766e",
+                            backgroundColor: "rgba(15, 118, 110, 0.2)",
+                            tension: 0.25,
+                            pointRadius: 2
+                        },
+                        {
+                            label: "二价",
+                            data: secondPrice,
+                            borderColor: "#0369a1",
+                            backgroundColor: "rgba(3, 105, 161, 0.2)",
+                            tension: 0.25,
+                            pointRadius: 2
+                        },
+                        {
+                            label: "综合金额",
+                            data: grandTotal,
+                            borderColor: "#c2410c",
+                            backgroundColor: "rgba(194, 65, 12, 0.18)",
+                            tension: 0.2,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: "index",
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 30
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCountTrend(dayStats) {
+            const labels = dayStats.map((row) => row.day);
+            const values = dayStats.map((row) => row.count);
+
+            const ctx = document.getElementById("countTrendChart").getContext("2d");
+            if (countTrendChart) {
+                countTrendChart.destroy();
+            }
+
+            countTrendChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: "每日件数",
+                            data: values,
+                            backgroundColor: "rgba(14, 165, 233, 0.75)",
+                            borderColor: "#0284c7",
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 30
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            precision: 0
+                        }
+                    }
+                }
+            });
+        }
+
+        function applyRender(monthValue) {
+            const dayStats = aggregateByDay(rawRows);
+            const filtered = filterByMonth(dayStats, monthValue);
+            updateMetrics(filtered);
+            renderDailyTable(filtered);
+            renderAmountTrend(filtered);
+            renderCountTrend(filtered);
+        }
+
+        function updateTimeTag() {
+            const now = new Date();
+            const datePart = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+            const timePart = [String(now.getHours()).padStart(2, "0"), String(now.getMinutes()).padStart(2, "0"), String(now.getSeconds()).padStart(2, "0")].join(":");
+            document.getElementById("updatedTag").textContent = "最近更新时间：" + datePart + " " + timePart;
+        }
+
+        function loadAllData() {
+            const token = getToken();
+            if (!token) {
+                top.showMessage("请先登录", 3000, "red");
+                return;
+            }
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("GET", $HOST + "/getData.php?" + "token=" + encodeURIComponent(token) + "&type=all", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState !== 4) {
+                    return;
+                }
+
+                if (xhr.status !== 200) {
+                    top.showMessage("获取数据失败，请稍后重试", 3000, "red");
+                    return;
+                }
+
+                let result = null;
+                try {
+                    result = JSON.parse(xhr.responseText);
+                } catch (error) {
+                    top.showMessage("数据解析失败", 3000, "red");
+                    return;
+                }
+
+                if (result.code !== 200 || !Array.isArray(result.data)) {
+                    top.showMessage(result.msg || "暂无可统计数据", 3000, "orange");
+                    rawRows = [];
+                    buildMonthFilterOptions([]);
+                    applyRender("all");
+                    updateTimeTag();
+                    return;
+                }
+
+                rawRows = result.data;
+                const dayStats = aggregateByDay(rawRows);
+                buildMonthFilterOptions(dayStats);
+                applyRender("all");
+                updateTimeTag();
+                top.showMessage("价格统计数据已更新");
+            };
+
+            xhr.send();
+        }
+
+        document.getElementById("monthFilter").addEventListener("change", function () {
+            applyRender(this.value);
+        });
+
+        document.getElementById("refreshBtn").addEventListener("click", function () {
+            loadAllData();
+        });
+
+        checkLoginTokenIsTrue();
+        loadAllData();
+    </script>
+</body>
+
+</html>
