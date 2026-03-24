@@ -226,7 +226,7 @@
     <div class="container">
         <section class="header">
             <h1>价格统计分析</h1>
-            <p>按天聚合价格数据，展示总体金额、单日趋势与件数走势。</p>
+            <p>按天聚合价格数据，展示总体价格、单日趋势与件数走势。</p>
             <div class="toolbar">
                 <label for="monthFilter">按月份筛选</label>
                 <select id="monthFilter">
@@ -251,8 +251,8 @@
                 <div class="value" id="totalNewPrice">0.0</div>
             </article>
             <article class="metric">
-                <div class="label">综合金额（两价和）</div>
-                <div class="value" id="grandTotal">0.0</div>
+                <div class="label">平均总值</div>
+                <div class="value" id="avgPrice">0.0</div>
             </article>
         </section>
 
@@ -280,13 +280,12 @@
                         <th>件数</th>
                         <th>一价合计</th>
                         <th>二价合计</th>
-                        <th>综合金额</th>
-                        <th>单件均值</th>
+                        <th>平均总值</th>
                     </tr>
                 </thead>
                 <tbody id="dailyTableBody">
                     <tr>
-                        <td colspan="6" class="empty">暂无数据</td>
+                        <td colspan="5" class="empty">暂无数据</td>
                     </tr>
                 </tbody>
             </table>
@@ -310,6 +309,22 @@
             return Number(value).toFixed(1);
         }
 
+        function calcItemAvgPrice(price, newPrice) {
+            const hasPrice = isNumericValue(price);
+            const hasNewPrice = isNumericValue(newPrice);
+
+            if (hasPrice && hasNewPrice) {
+                return (Number(price) + Number(newPrice)) / 2;
+            }
+            if (hasPrice) {
+                return Number(price);
+            }
+            if (hasNewPrice) {
+                return Number(newPrice);
+            }
+            return 0;
+        }
+
         function aggregateByDay(rows) {
             const map = {};
 
@@ -329,20 +344,21 @@
                         count: 0,
                         totalPrice: 0,
                         totalNewPrice: 0,
-                        grandTotal: 0
+                        avgTotal: 0
                     };
                 }
 
                 const p = toNumber(item.price);
                 const np = toNumber(item.new_price);
+                const avg = calcItemAvgPrice(item.price, item.new_price);
 
                 map[day].count += 1;
                 map[day].totalPrice += p;
                 map[day].totalNewPrice += np;
-                map[day].grandTotal += p + np;
+                map[day].avgTotal += avg;
             });
 
-            return Object.values(map).sort((a, b) => a.day.localeCompare(b.day));
+            return Object.values(map).sort((a, b) => b.day.localeCompare(a.day));
         }
 
         function buildMonthFilterOptions(dayStats) {
@@ -351,13 +367,19 @@
                 monthSet.add(row.day.slice(0, 7));
             });
 
-            const months = Array.from(monthSet).sort();
+            const months = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
             const html = ['<option value="all">全部月份</option>'];
             months.forEach((month) => {
                 html.push(`<option value="${month}">${month}</option>`);
             });
 
-            document.getElementById("monthFilter").innerHTML = html.join("");
+            const monthFilter = document.getElementById("monthFilter");
+            monthFilter.innerHTML = html.join("");
+
+            const defaultMonth = months.length ? months[0] : "all";
+            monthFilter.value = defaultMonth;
+
+            return defaultMonth;
         }
 
         function filterByMonth(dayStats, month) {
@@ -372,37 +394,38 @@
                 acc.count += row.count;
                 acc.totalPrice += row.totalPrice;
                 acc.totalNewPrice += row.totalNewPrice;
-                acc.grandTotal += row.grandTotal;
+                acc.avgTotal += row.avgTotal;
                 return acc;
             }, {
                 count: 0,
                 totalPrice: 0,
                 totalNewPrice: 0,
-                grandTotal: 0
+                avgTotal: 0
             });
+
+            const avgPrice = summary.avgTotal;
 
             document.getElementById("totalCount").textContent = summary.count;
             document.getElementById("totalPrice").textContent = formatMoney(summary.totalPrice);
             document.getElementById("totalNewPrice").textContent = formatMoney(summary.totalNewPrice);
-            document.getElementById("grandTotal").textContent = formatMoney(summary.grandTotal);
+            document.getElementById("avgPrice").textContent = formatMoney(avgPrice);
         }
 
         function renderDailyTable(dayStats) {
             const tbody = document.getElementById("dailyTableBody");
             if (!dayStats.length) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty">筛选条件下暂无数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="empty">筛选条件下暂无数据</td></tr>';
                 return;
             }
 
             const html = dayStats.map((row) => {
-                const avg = row.count ? row.grandTotal / row.count : 0;
+                const avg = row.avgTotal;
                 return `
                     <tr>
                         <td>${row.day}</td>
                         <td>${row.count}</td>
                         <td>${formatMoney(row.totalPrice)}</td>
                         <td>${formatMoney(row.totalNewPrice)}</td>
-                        <td>${formatMoney(row.grandTotal)}</td>
                         <td>${formatMoney(avg)}</td>
                     </tr>
                 `;
@@ -415,7 +438,7 @@
             const labels = dayStats.map((row) => row.day);
             const firstPrice = dayStats.map((row) => Number(formatMoney(row.totalPrice)));
             const secondPrice = dayStats.map((row) => Number(formatMoney(row.totalNewPrice)));
-            const grandTotal = dayStats.map((row) => Number(formatMoney(row.grandTotal)));
+            const avgPrice = dayStats.map((row) => Number(formatMoney(row.avgTotal)));
 
             const ctx = document.getElementById("amountTrendChart").getContext("2d");
             if (amountTrendChart) {
@@ -444,8 +467,8 @@
                             pointRadius: 2
                         },
                         {
-                            label: "综合金额",
-                            data: grandTotal,
+                            label: "平均总值",
+                            data: avgPrice,
                             borderColor: "#c2410c",
                             backgroundColor: "rgba(194, 65, 12, 0.18)",
                             tension: 0.2,
@@ -565,16 +588,16 @@
                 if (result.code !== 200 || !Array.isArray(result.data)) {
                     top.showMessage(result.msg || "暂无可统计数据", 3000, "orange");
                     rawRows = [];
-                    buildMonthFilterOptions([]);
-                    applyRender("all");
+                    const defaultMonth = buildMonthFilterOptions([]);
+                    applyRender(defaultMonth);
                     updateTimeTag();
                     return;
                 }
 
                 rawRows = result.data;
                 const dayStats = aggregateByDay(rawRows);
-                buildMonthFilterOptions(dayStats);
-                applyRender("all");
+                const defaultMonth = buildMonthFilterOptions(dayStats);
+                applyRender(defaultMonth);
                 updateTimeTag();
                 top.showMessage("价格统计数据已更新");
             };
